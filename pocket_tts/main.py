@@ -13,7 +13,9 @@ import typer
 import uvicorn
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
+from pydantic import BaseModel
+from starlette.background import BackgroundTask
 
 from pocket_tts.data.audio import stream_audio_chunks
 from pocket_tts.default_parameters import (
@@ -144,11 +146,77 @@ def generate_data_with_state(
         thread.join()
 
 
+class NormalizeRequest(BaseModel):
+    text: str
+    mode: str = "auto"
+
+
+@web_app.post("/api/normalize")
+def api_normalize(req: NormalizeRequest) -> dict:
+    """Normalize text (numbers, ordinals, currencies, abbreviations) based on target language mode."""
+    from pocket_tts.models.text_chunking import normalize_text
+
+    normalized, changes = normalize_text(req.text, mode=req.mode)
+    return {
+        "original": req.text,
+        "normalized": normalized,
+        "changes": changes,
+        "mode": req.mode,
+    }
+
+
+@web_app.post("/api/export-persona")
+def api_export_persona(
+    voice_url: Annotated[str | None, Form()] = None,
+    voice_wav: Annotated[UploadFile | None, File()] = None,
+    persona_name: Annotated[str, Form()] = "custom_persona",
+) -> FileResponse:
+    """Encode an uploaded voice audio or preset and download as a precomputed .safetensors persona."""
+    import re
+    if voice_url is not None and voice_wav is not None:
+        raise HTTPException(status_code=400, detail="Cannot provide both voice_url and voice_wav")
+
+    model = _loaded_model()
+    if voice_url is not None:
+        model_state = model._cached_get_state_for_audio_prompt(voice_url)
+    elif voice_wav is not None:
+        suffix = Path(voice_wav.filename).suffix if voice_wav.filename else ".wav"
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
+            temp_file.write(voice_wav.file.read())
+            temp_file.flush()
+            temp_file_path = temp_file.name
+
+        try:
+            model_state = model.get_state_for_audio_prompt(Path(temp_file_path), truncate=True)
+        finally:
+            try:
+                os.unlink(temp_file_path)
+            except OSError:
+                pass
+    elif default_voice_state is not None:
+        model_state = default_voice_state
+    else:
+        raise HTTPException(status_code=500, detail="The server has no default voice loaded.")
+
+    clean_name = re.sub(r"[^a-zA-Z0-9_\-]", "_", persona_name.strip()) or "persona"
+    fd, temp_safetensors_path = tempfile.mkstemp(suffix=".safetensors")
+    os.close(fd)
+    export_model_state(model_state, temp_safetensors_path)
+
+    return FileResponse(
+        temp_safetensors_path,
+        media_type="application/octet-stream",
+        filename=f"{clean_name}.safetensors",
+        background=BackgroundTask(lambda: os.remove(temp_safetensors_path)),
+    )
+
+
 @web_app.post("/tts")
 def text_to_speech(
-    text: str = Form(...),
-    voice_url: str | None = Form(None),
-    voice_wav: UploadFile | None = File(None),
+    text: Annotated[str, Form()],
+    voice_url: Annotated[str | None, Form()] = None,
+    voice_wav: Annotated[UploadFile | None, File()] = None,
+    normalize_mode: Annotated[str, Form()] = "auto",
 ) -> StreamingResponse:
     """
     Generate speech from text using the pre-loaded voice prompt or a custom voice.
@@ -157,9 +225,13 @@ def text_to_speech(
         text: Text to convert to speech
         voice_url: Optional built-in voice name (e.g., "alba"), or voice URL (http://, https://, or hf://)
         voice_wav: Optional uploaded voice file (mutually exclusive with voice_url)
+        normalize_mode: Normalization mode ('auto', 'hindi', 'hinglish', 'english', or 'off')
     """
     if not text.strip():
         raise HTTPException(status_code=400, detail="Text cannot be empty")
+    from pocket_tts.models.text_chunking import normalize_text
+    if normalize_mode != "off":
+        text, _ = normalize_text(text, mode=normalize_mode)
 
     if voice_url is not None and voice_wav is not None:
         raise HTTPException(status_code=400, detail="Cannot provide both voice_url and voice_wav")
@@ -167,16 +239,14 @@ def text_to_speech(
     # Use the appropriate model state
     if voice_url is not None:
         if not (
-            voice_url.startswith("http://")
-            or voice_url.startswith("https://")
-            or voice_url.startswith("hf://")
+            voice_url.startswith(("http://", "https://", "hf://"))
             or voice_url in _ORIGINS_OF_PREDEFINED_VOICES
         ):
             raise HTTPException(
                 status_code=400, detail="voice_url must start with http://, https://, or hf://"
             )
         model_state = _loaded_model()._cached_get_state_for_audio_prompt(voice_url)
-        logging.warning("Using voice from URL: %s", voice_url)
+        logger.warning("Using voice from URL: %s", voice_url)
     elif voice_wav is not None:
         # Use uploaded voice file - preserve extension for format detection
         suffix = Path(voice_wav.filename).suffix if voice_wav.filename else ".wav"
@@ -217,7 +287,7 @@ def serve(
         str | None,
         typer.Option(
             help="Language for the TTS model. "
-            "'english_2026-01', 'english_2026-04', 'english_2026-09', 'english_2026-09_2', 'english_2026-10', 'english_drifting_26-09', 'english_18m_2026-10', 'english_18m_refl_2026-10', 'english_7m_2026-10', 'english_7m_refl_2026-10', 'english_2m_2026-10', 'english_2m_refl_2026-10', 'english', 'french', 'french_24l', 'german', 'german_24l', 'portuguese', 'portuguese_24l', 'italian', 'italian_24l', 'spanish', 'spanish_24l', 'dutch', 'dutch_24l'."
+            "'english_2026-01', 'english_2026-04', 'english_2026-09', 'english_2026-09_2', 'english_2026-10', 'english_drifting_26-09', 'english_18m_2026-10', 'english_18m_refl_2026-10', 'english_7m_2026-10', 'english_7m_refl_2026-10', 'english_2m_2026-10', 'english_2m_refl_2026-10', 'english', 'french', 'french_24l', 'german', 'german_24l', 'portuguese', 'portuguese_24l', 'italian', 'italian_24l', 'spanish', 'spanish_24l', 'dutch', 'dutch_24l', 'hindi', 'hindi_12l', 'hinglish', 'multilingual'."
             " Incompatible with the config argument. Default is 'english', which is the same model as 'english_2026-10'.",
             show_default=False,
         ),
@@ -241,11 +311,19 @@ def serve(
     quantize: Annotated[
         bool, typer.Option(help="Apply int8 quantization to reduce memory usage")
     ] = False,
+    sampler_decode_steps: Annotated[
+        int, typer.Option(help="Number of steps for Lagrangian Self Distillation decoding.")
+    ] = DEFAULT_SAMPLER_DECODE_STEPS,
 ):
     """Start the FastAPI server."""
 
     global tts_model, default_voice_state
-    tts_model = TTSModel.load_model(language=language, config=config, quantize=quantize)
+    tts_model = TTSModel.load_model(
+        language=language,
+        config=config,
+        quantize=quantize,
+        sampler_decode_steps=sampler_decode_steps,
+    )
     if default_voice is None:
         default_voice = get_default_voice_for_language(language, config)
     # Resolved before serving: a voice that cannot be loaded fails at startup instead of on
@@ -283,7 +361,7 @@ def generate(
         typer.Option(
             help=(
                 "Language for the TTS model. "
-                "'english_2026-01', 'english_2026-04', 'english_2026-09', 'english_2026-09_2', 'english_2026-10', 'english_drifting_26-09', 'english_18m_2026-10', 'english_18m_refl_2026-10', 'english_7m_2026-10', 'english_7m_refl_2026-10', 'english_2m_2026-10', 'english_2m_refl_2026-10', 'english', 'french', 'french_24l', 'german', 'german_24l', 'portuguese', 'portuguese_24l', 'italian', 'italian_24l', 'spanish', 'spanish_24l', 'dutch', 'dutch_24l'."
+                "'english_2026-01', 'english_2026-04', 'english_2026-09', 'english_2026-09_2', 'english_2026-10', 'english_drifting_26-09', 'english_18m_2026-10', 'english_18m_refl_2026-10', 'english_7m_2026-10', 'english_7m_refl_2026-10', 'english_2m_2026-10', 'english_2m_refl_2026-10', 'english', 'french', 'french_24l', 'german', 'german_24l', 'portuguese', 'portuguese_24l', 'italian', 'italian_24l', 'spanish', 'spanish_24l', 'dutch', 'dutch_24l', 'hindi', 'hindi_12l', 'hinglish', 'multilingual'."
                 " Incompatible with the config argument. Default is 'english', which is the same model as 'english_2026-10'. "
                 "The '24l' variants are bigger models, "
                 "not distilled yet and here only as preview. They're not the final "
@@ -359,6 +437,8 @@ def generate(
         if text == "-":
             # Read text from stdin
             text = sys.stdin.read()
+        from pocket_tts.models.text_chunking import normalize_numbers
+        text = normalize_numbers(text)
 
         if not text.strip():
             logger.error("No input received from stdin.")
@@ -418,7 +498,7 @@ def export_voice(
         typer.Option(
             help=(
                 "Language for the TTS model. "
-                "'english_2026-01', 'english_2026-04', 'english_2026-09', 'english_2026-09_2', 'english_2026-10', 'english_drifting_26-09', 'english_18m_2026-10', 'english_18m_refl_2026-10', 'english_7m_2026-10', 'english_7m_refl_2026-10', 'english_2m_2026-10', 'english_2m_refl_2026-10', 'english', 'french', 'french_24l', 'german', 'german_24l', 'portuguese', 'portuguese_24l', 'italian', 'italian_24l', 'spanish', 'spanish_24l', 'dutch', 'dutch_24l'."
+                "'english_2026-01', 'english_2026-04', 'english_2026-09', 'english_2026-09_2', 'english_2026-10', 'english_drifting_26-09', 'english_18m_2026-10', 'english_18m_refl_2026-10', 'english_7m_2026-10', 'english_7m_refl_2026-10', 'english_2m_2026-10', 'english_2m_refl_2026-10', 'english', 'french', 'french_24l', 'german', 'german_24l', 'portuguese', 'portuguese_24l', 'italian', 'italian_24l', 'spanish', 'spanish_24l', 'dutch', 'dutch_24l', 'hindi', 'hindi_12l', 'hinglish', 'multilingual'."
                 " Incompatible with the config argument. Default is 'english', which is the same model as 'english_2026-10'. "
                 "The '24l' variants are bigger models, "
                 "not distilled yet and here only as preview."

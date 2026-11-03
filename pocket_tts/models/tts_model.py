@@ -311,7 +311,7 @@ class TTSModel(nn.Module):
         Args:
             language: Optional language identifier to select a predefined config. Incompatible with
                 the `config` argument. Available options
-                are `"english_2026-01"`, `"english_2026-04"`, `"english_2026-09"`, `"english_2026-09_2"`, `"english_2026-10"`, `"english_drifting_26-09"`, `"english_18m_2026-10"`, `"english_18m_refl_2026-10"`, `"english_7m_2026-10"`, `"english_7m_refl_2026-10"`, `"english_2m_2026-10"`, `"english_2m_refl_2026-10"`, `"english"`, `"french"`, `"french_24l"`, `"german"`, `"german_24l"`, `"portuguese"`, `"portuguese_24l"`, `"italian"`, `"italian_24l"`, `"spanish"`, `"spanish_24l"`, `"dutch"`, `"dutch_24l"`.
+                are `"english_2026-01"`, `"english_2026-04"`, `"english_2026-09"`, `"english_2026-09_2"`, `"english_2026-10"`, `"english_drifting_26-09"`, `"english_18m_2026-10"`, `"english_18m_refl_2026-10"`, `"english_7m_2026-10"`, `"english_7m_refl_2026-10"`, `"english_2m_2026-10"`, `"english_2m_refl_2026-10"`, `"english"`, `"french"`, `"french_24l"`, `"german"`, `"german_24l"`, `"portuguese"`, `"portuguese_24l"`, `"italian"`, `"italian_24l"`, `"spanish"`, `"spanish_24l"`, `"dutch"`, `"dutch_24l"`, `"hindi"`, `"hindi_12l"`, `"hinglish"`, `"multilingual"`.
                 If neither `config` nor `language` is provided, defaults to `"english", which is the same model as 'english_2026-10'`.
             config: A path to a custom YAML config file: a local path (e.g., `"C://pocket_tts/pocket_tts_config.yaml"`),
                 an `https://` URL, or an `hf://` path (e.g. `"hf://<repo_id>/<path>[@revision]"`).
@@ -1088,26 +1088,29 @@ class TTSModel(nn.Module):
             isinstance(audio_conditioning, str)
             and audio_conditioning in _ORIGINS_OF_PREDEFINED_VOICES
         ):
-            # We get the audio conditioning directly from the safetensors file.
-            if self.has_custom_weights:
-                raise ValueError(
-                    f"Predefined voice {audio_conditioning!r} is a state precomputed with the "
-                    "released weights; feeding it to other weights leaves the model out of "
-                    "distribution (it typically never emits EOS). Pass the voice as an audio "
-                    "file instead."
+            voice_target = _ORIGINS_OF_PREDEFINED_VOICES[audio_conditioning]
+            if voice_target.endswith(".safetensors"):
+                if self.has_custom_weights:
+                    raise ValueError(
+                        f"Predefined voice {audio_conditioning!r} is a state precomputed with the "
+                        "released weights; feeding it to other weights leaves the model out of "
+                        "distribution (it typically never emits EOS). Pass the voice as an audio "
+                        "file instead."
+                    )
+                if self.origin is None or not self.origin.is_relative_to(CONFIGS_DIR):
+                    raise ValueError(
+                        f"Cannot use predefined voices when the model "
+                        f"is not loaded from a config associated with a language."
+                        f"Here the origin is {self.origin}"
+                    )
+                return _import_model_state(
+                    download_if_necessary(
+                        get_predefined_voice(language=self.origin.stem, name=audio_conditioning)
+                    ),
+                    self.device,
                 )
-            if self.origin is None or not self.origin.is_relative_to(CONFIGS_DIR):
-                raise ValueError(
-                    f"Cannot use predefined voices when the model "
-                    f"is not loaded from a config associated with a language."
-                    f"Here the origin is {self.origin}"
-                )
-            return _import_model_state(
-                download_if_necessary(
-                    get_predefined_voice(language=self.origin.stem, name=audio_conditioning)
-                ),
-                self.device,
-            )
+            else:
+                return self.get_state_for_audio_prompt(voice_target, truncate=truncate)
 
         if not self.has_voice_cloning and isinstance(audio_conditioning, (str, Path)):
             raise ValueError(VOICE_CLONING_UNSUPPORTED)
@@ -1118,11 +1121,16 @@ class TTSModel(nn.Module):
         if isinstance(audio_conditioning, Path):
             audio, conditioning_sample_rate = audio_read(audio_conditioning)
 
+            # Peak normalize to -0.5 dBFS to prevent latent distortion from quiet or clipping inputs
+            peak = audio.abs().max()
+            if peak > 1e-4:
+                audio = audio / peak * 0.95
+
             if truncate:
-                max_samples = int(30 * conditioning_sample_rate)  # 30 seconds of audio
+                max_samples = int(8 * conditioning_sample_rate)
                 if audio.shape[-1] > max_samples:
                     audio = audio[..., :max_samples]
-                    logger.info(f"Audio truncated to first 30 seconds ({max_samples} samples)")
+                    logger.info(f"Audio truncated to first 8 seconds ({max_samples} samples)")
 
             audio_conditioning = convert_audio(
                 audio, conditioning_sample_rate, self.config.mimi.sample_rate, 1
