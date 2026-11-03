@@ -44,6 +44,13 @@ _ORIGINS_OF_PREDEFINED_VOICES = {
     "rafael": "hf://kyutai/pocket-tts/g-Vi8PgmSY0-enhanced-v2.wav@64ab7d24c479d736a83b8cc666c4a776fca30fda",
     "daan": "hf://kyutai/pocket-tts/cml_tts_nl_11290_9412_000030_0001.flac@2dd944b099d06bb9edbd221fef138685711d9bf0",
     "estelle": "hf://kyutai/tts-voices/unmute-prod-website/developpeuse-3.wav@1fc7395b7e012e2bbebfca14b942a4ef62ccc899",
+    "pooja": "hf://saryps-labs/pocket-tts-hindi/samples/voice_01_f.wav",
+    "priya": "hf://saryps-labs/pocket-tts-hindi/samples/voice_02_f.wav",
+    "neha": "hf://saryps-labs/pocket-tts-hindi/samples/voice_03_f.wav",
+    "kabir": "hf://saryps-labs/pocket-tts-hindi/samples/voice_06_m.wav",
+    "rohan": "hf://Thanushttk/pocket-tts-multilingual/samples/hindi_english.wav",
+    "aarav": "hf://Thanushttk/pocket-tts-multilingual/samples/english.wav",
+    "dev": "hf://Thanushttk/pocket-tts-multilingual/samples/hindi.wav",
 }
 
 
@@ -104,7 +111,7 @@ class display_execution_time:
 
 
 def download_if_necessary(file_path: str) -> Path:
-    if file_path.startswith("http://") or file_path.startswith("https://"):
+    if file_path.startswith(("http://", "https://")):
         cache_dir = make_cache_directory()
         suffix = Path(urlparse(file_path).path).suffix
         cached_file = cache_dir / (hashlib.sha256(file_path.encode()).hexdigest() + suffix)

@@ -47,6 +47,19 @@ DEFAULT_TEXT_FOR_LANGUAGE = {
         "Soy lo suficientemente rápido para funcionar en pequeñas CPU. "
         "Espero que te guste."
     ),
+    "hindi": (
+        "नमस्ते दुनिया। मैं Pocket TTS हूँ। "
+        "मैं छोटे CPU पर भी बहुत तेज़ी से चलने में सक्षम हूँ। "
+        "आशा है कि आपको मेरी आवाज़ पसंद आएगी।"
+    ),
+    "hinglish": (
+        "Hello world! मैं Pocket TTS हूँ। "
+        "कल की meeting तीन बजे reschedule कर देना और updated link मुझे भेज देना।"
+    ),
+    "multilingual": (
+        "Hello! आज का plan is simple, "
+        "कल की meeting 10 बजे reschedule कर देना और updated link मुझे भेज देना।"
+    ),
 }
 
 DEFAULT_VOICE_FOR_LANGUAGE = {
@@ -80,6 +93,8 @@ def get_default_voice_for_language(
     voices, hence the audio file instead of the voice name.
     """
     if config is not None or checkpoint is not None:
+        return DEFAULT_VOICE_FOR_CUSTOM_MODEL
+    if language is not None and any(l in language for l in ("hindi", "hinglish", "multilingual")):
         return DEFAULT_VOICE_FOR_CUSTOM_MODEL
     for key, voice in DEFAULT_VOICE_FOR_LANGUAGE.items():
         if language is not None and key in language:

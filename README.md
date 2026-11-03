@@ -30,7 +30,7 @@ Supports Python 3.10, 3.11, 3.12, 3.13 and 3.14. Requires PyTorch 2.5+. Does not
 * Uses only 2 CPU cores
 * Python API and CLI
 * Voice cloning
-* Multi-language support: english, french, german, portuguese, italian, spanish, dutch
+* Multi-language support: english, french, german, portuguese, italian, spanish, dutch, hindi, hinglish
 * Can handle infinitely long text inputs
 * [Can run on client-side in the browser](#in-browser-implementations)
 
@@ -474,6 +474,28 @@ uvx pocket-tts generate \
   --text "Salaam aleekum. Lii mooy jumtukaayu wax ci làkku wolof."
 ```
 The repository is gated: accept the terms on the model page and log in with `hf auth login` first.
+</details>
+
+<details>
+<summary><a href="https://github.com/AltSlate-Labs/jugnu-pocket-tts">Jugnu Pocket TTS (Hindi, English & Hinglish)</a> by <a href="https://huggingface.co/altslate">altslate labs</a>, 6 & 12 layers</summary>
+
+Hindi, English, and code-mixed Hinglish speech synthesis with zero-shot voice cloning from a 5–15 s reference audio.
+
+```bash
+# Lite model (6 layers, fast CPU inference)
+pocket-tts generate \
+  --language hindi \
+  --voice my_voice.wav \
+  --text "कल की meeting तीन बजे reschedule कर देना और updated link मुझे भेज देना।"
+
+# Base model (12 layers, higher quality)
+pocket-tts generate \
+  --language hindi_12l \
+  --voice my_voice.wav \
+  --text "नमस्ते दुनिया! आपका स्वागत है।"
+```
+
+_Note: Digits should be written as words (e.g. 'तीन बजे' or 'three thirty'). Both `altslate/jugnu-pocket-tts` and `kyutai/pocket-tts` terms must be accepted on Hugging Face._
 </details>
 
 Want your model here? Head to the [training Readme](https://github.com/kyutai-labs/pocket-tts/blob/main/training/README.md) to get started!
