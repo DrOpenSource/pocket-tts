@@ -152,17 +152,12 @@ class NormalizeRequest(BaseModel):
 
 
 @web_app.post("/api/normalize")
-def api_normalize(req: NormalizeRequest) -> dict:
+def api_normalize(req: NormalizeRequest) -> dict[str, object]:
     """Normalize text (numbers, ordinals, currencies, abbreviations) based on target language mode."""
     from pocket_tts.models.text_chunking import normalize_text
 
     normalized, changes = normalize_text(req.text, mode=req.mode)
-    return {
-        "original": req.text,
-        "normalized": normalized,
-        "changes": changes,
-        "mode": req.mode,
-    }
+    return {"original": req.text, "normalized": normalized, "changes": changes, "mode": req.mode}
 
 
 @web_app.post("/api/export-persona")
@@ -173,6 +168,7 @@ def api_export_persona(
 ) -> FileResponse:
     """Encode an uploaded voice audio or preset and download as a precomputed .safetensors persona."""
     import re
+
     if voice_url is not None and voice_wav is not None:
         raise HTTPException(status_code=400, detail="Cannot provide both voice_url and voice_wav")
 
@@ -230,6 +226,7 @@ def text_to_speech(
     if not text.strip():
         raise HTTPException(status_code=400, detail="Text cannot be empty")
     from pocket_tts.models.text_chunking import normalize_text
+
     if normalize_mode != "off":
         text, _ = normalize_text(text, mode=normalize_mode)
 
@@ -438,6 +435,7 @@ def generate(
             # Read text from stdin
             text = sys.stdin.read()
         from pocket_tts.models.text_chunking import normalize_numbers
+
         text = normalize_numbers(text)
 
         if not text.strip():
