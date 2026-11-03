@@ -80,7 +80,7 @@ class JsonTokenizer:
 
     def id_to_piece(self, idx: int) -> str:
         token = self.tokenizer.id_to_token(idx)
-        return '' if token is None else token
+        return "" if token is None else token
 
     def serialize(self) -> tuple[str, bytes]:
         return "tokenizers", self.tokenizer.to_str().encode()

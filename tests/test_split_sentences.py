@@ -310,6 +310,72 @@ def test_replace_characters_rewrites_unseen_characters_before_capitalizing():
     assert got == '"Yes," she said.'
 
 
+def _split(tokenizer: Tokenizer, text: str, max_tokens: int) -> list[str]:
+    return split_into_best_sentences(
+        tokenizer, text, max_tokens, pad_with_spaces_for_short_inputs=False, remove_semicolons=False
+    )
+
+
+REIMBURSEMENT = (
+    "The decision will be processed by the S C H E L L I N G department and the result "
+    "will be a reimbursement of $822.95, which should be reflected in your account within "
+    "a few business days."
+)
+SERVICE_FEE = (
+    "Sure, I can walk you through the procedure, the solution we typically offer includes "
+    "an onsite technician visit, and the standard service fee is $286.50, our team "
+    "coordinates with the IRM and CPAM divisions to ensure compliance."
+)
+
+
+@pytest.mark.parametrize(
+    "text, max_tokens, number",
+    [
+        (REIMBURSEMENT, 50, "$822.95,"),
+        (SERVICE_FEE, 50, "$286.50,"),
+        (
+            "The value is 3.14. The next value is larger. And the third one is the largest.",
+            10,
+            "3.14.",
+        ),
+    ],
+)
+def test_no_chunk_ends_on_a_decimal_number(
+    tokenizer: Tokenizer, text: str, max_tokens: int, number: str
+):
+    """A chunk ending on "$822.95," would get a terminal period appended, and the model then takes
+    the decimal point for the sentence end and drops the decimals: keep it with what follows."""
+    chunks = _split(tokenizer, text, max_tokens)
+    assert any(number in chunk and not chunk.endswith(number) for chunk in chunks), chunks
+    assert " ".join(chunks).split() == text.split()
+
+
+def test_splits_without_decimal_numbers_are_unchanged(tokenizer: Tokenizer):
+    assert _split(tokenizer, "First sentence here. Second sentence here. Third one.", 10) == [
+        "First sentence here.",
+        "Second sentence here.",
+        "Third one.",
+    ]
+    text = (
+        "It was the best of times, it was the worst of times, it was the age of wisdom, it was the "
+        "age of foolishness, it was the epoch of belief, it was the epoch of incredulity, it was "
+        "the season of Light, it was the season of Darkness"
+    )
+    assert _split(tokenizer, text, 20) == [
+        "It was the best of times, it was the worst of times,",
+        "it was the age of wisdom, it was the age of foolishness,",
+        "it was the epoch of belief,",
+        "it was the epoch of incredulity,",
+        "it was the season of Light, it was the season of Darkness.",
+    ]
+    # Integers and sentence-final years are not decimal numbers.
+    assert _split(tokenizer, "We met in 2008. It was raining. The bus was late.", 8) == [
+        "We met in 2008.",
+        "It was raining.",
+        "The bus was late.",
+    ]
+
+
 def test_prepare_text_prompt_hindi_punctuation():
     # Devanagari danda should be recognized as terminal punctuation and not get an extra period.
     got, _ = prepare_text_prompt("नमस्ते दुनिया।", False, False, capitalize_first_letter=False)
@@ -326,3 +392,26 @@ def test_prepare_text_prompt_digit_warning(caplog: pytest.LogCaptureFixture):
         got, _ = prepare_text_prompt("3 बजे meeting है।", False, False, capitalize_first_letter=False)
     assert "Digits found in input text" in caplog.text
     assert got == "3 बजे meeting है।"
+
+
+def test_normalize_numbers_hindi():
+    from pocket_tts.models.text_chunking import normalize_numbers, normalize_text
+
+    assert normalize_numbers("10", mode="hindi") == "दस"
+    assert normalize_numbers("₹500", mode="hindi") == "पाँच सौ रुपये"
+    assert normalize_numbers("3:30", mode="hindi") == "साढ़े तीन बजे"
+    assert normalize_numbers("50%", mode="hindi") == "पचास प्रतिशत"
+    assert normalize_numbers("1st", mode="hindi") == "पहला"
+
+    norm, changes = normalize_text("10 लोग और ₹50", mode="hindi")
+    assert norm == "दस लोग और पचास रुपये"
+    assert len(changes) == 2
+
+
+def test_normalize_numbers_english():
+    from pocket_tts.models.text_chunking import normalize_numbers
+
+    assert normalize_numbers("10", mode="english") == "ten"
+    assert normalize_numbers("$50", mode="english") == "fifty dollars"
+    assert normalize_numbers("50%", mode="english") == "fifty percent"
+    assert normalize_numbers("1st", mode="english") == "first"
