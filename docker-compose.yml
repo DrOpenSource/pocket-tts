@@ -1,0 +1,19 @@
+services:
+  pocket-tts:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pocket-tts
+    restart: always
+    ports:
+      # Maps host port 8000 (or change left side to 8080 if needed) to container port 8000
+      - "8000:8000"
+    command: ["serve", "--host", "0.0.0.0", "--port", "8000"]
+    volumes:
+      # Cache HuggingFace weights so they survive container updates/restarts
+      - hf_cache:/root/.cache/huggingface
+    environment:
+      - PYTHONUNBUFFERED=1
+
+volumes:
+  hf_cache:
