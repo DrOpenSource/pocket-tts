@@ -10,3 +10,5 @@ COPY ./pocket_tts ./pocket_tts
 RUN uv run pocket-tts --help
 
 ENTRYPOINT ["uv", "run", "pocket-tts"]
+CMD ["serve", "--host", "0.0.0.0", "--port", "8000"]
+
