@@ -11,7 +11,7 @@ _Last Updated: November 5, 2026_
 - **User Fork**: [`DrOpenSource/pocket-tts`](https://github.com/DrOpenSource/pocket-tts)
 - **Active Pull Request**: **[PR #412](https://github.com/kyutai-labs/pocket-tts/pull/412)**
   - _Title_: `Add Indic punctuation (danda) sentence chunking and text normalization`
-  - _Status_: **OPEN & 100% GREEN CI** (pytest on Python 3.14, rust, ty 3.10, ty 3.14 all passing).
+  - _Status_: **OPEN, MERGEABLE, ALL CI PASSING** at `64de5c9` (Nov 5, 2026). Reworked by the maintainer in `f6bf603`; no formal review yet.
   - _Action_: **DO NOT CLOSE.** Awaiting Kyutai maintainer review/merge.
 - **Production Deployment**: **`https://clone.taqnik.in`** (Running on Hostinger VPS via Dokploy / Docker)
 
@@ -31,7 +31,7 @@ xdev     -> https://github.com/Xdev200/pocket-tts          (Old clone reference)
    - Contains all production features, default multilingual engine (`DEFAULT_LANGUAGE = "multilingual"`), 7 Indian voice presets (Pooja, Priya, Neha, Kabir, Rohan, Aarav, Dev), `.safetensors` persona caching, text normalizer, and Docker configurations.
    - Pushed and backed up on GitHub at `DrOpenSource/pocket-tts:personal-dev`.
 2. **`pr/indic-punctuation-and-normalizer`**:
-   - Clean, minimal 4-file branch backing upstream PR #412.
+   - Branch backing upstream PR #412. Contains a maintainer commit: update it with merges, never force-push.
 3. **`main`**:
    - Clean mirror tracking `upstream/main`.
 
@@ -47,7 +47,7 @@ xdev     -> https://github.com/Xdev200/pocket-tts          (Old clone reference)
 | **Multilingual Model Default**        | `pocket_tts/default_parameters.py`         | Sets `multilingual` (`Thanushttk/pocket-tts-multilingual`) as default language                                |
 | **Algorithmic G2P & Hinglish Engine** | `pocket_tts/models/text_chunking.py`       | 100+ curated loanwords + algorithmic G2P phonemizer fallback for unlisted English words + Romanized Hindi     |
 | **Indic Danda Sentence Chunking**     | `pocket_tts/models/text_chunking.py`       | Recognizes `।` and `॥` as terminal punctuation                                                                |
-| **Text Normalization Engine**         | `pocket_tts/models/text_chunking.py`       | Expands digits (`10` $\to$ `दस`), time (`3:30`), currency (`₹`, `$`), ordinals                                |
+| **Text Normalization Engine**         | `pocket_tts/models/text_chunking.py`       | Expands digits (`10` $\to$ `दस`), time, currency, ordinals, Indian grouping (`₹1,25,000`), spoken decimals      |
 | **7 Indian Voice Presets**            | `pocket_tts/utils/utils.py`                | Pooja, Priya, Neha, Kabir, Rohan, Aarav, Dev with instant sample auditioning                                  |
 | **Precomputed Voice Personas**        | `pocket_tts/main.py` + Web UI              | Instant `.safetensors` persona export & drag-and-drop                                                         |
 | **Hindi Model Configs**               | `pocket_tts/config/hindi*.yaml`            | Native configs for Lite (6L) and Base (12L) models                                                            |
@@ -61,6 +61,11 @@ xdev     -> https://github.com/Xdev200/pocket-tts          (Old clone reference)
 
 - Check if Kyutai maintainers have requested any minor adjustments.
 - If edits are requested, apply them on `pr/indic-punctuation-and-normalizer` and push.
+
+### Personal-dev vs. upstream (keep these differences)
+
+- Upstream normalizes numbers per model config in `pocket_tts/text_normalization/`. `personal-dev` keeps `normalize_text` for its per-request `auto` mode, `changes` list, abbreviations and transliterator.
+- Keep the vocabulary scan in `get_punctuation_tokens`. Upstream's `tokenizer(".!...?")` probe misses the plain `.` on the multilingual tokenizer, which merges sentences into one chunk.
 
 ### Task 2: Host on Server (`clone.taqnik.in`)
 

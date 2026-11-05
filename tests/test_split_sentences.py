@@ -417,6 +417,65 @@ def test_normalize_numbers_english():
     assert normalize_numbers("1st", mode="english") == "first"
 
 
+@pytest.mark.parametrize(
+    "text, expected",
+    [
+        ("3.14 प्रतिशत", "तीन दशमलव एक चार प्रतिशत"),
+        ("3.14%", "तीन दशमलव एक चार प्रतिशत"),
+        ("₹1,25,000 मिले", "एक लाख पच्चीस हज़ार रुपये मिले"),
+        ("₹125,000", "एक लाख पच्चीस हज़ार रुपये"),
+        ("₹5 करोड़", "पाँच करोड़ रुपये"),
+        ("₹99.50", "निन्यानवे दशमलव पाँच शून्य रुपये"),
+        ("1:30 बजे", "डेढ़ बजे"),
+        ("2:30", "ढाई बजे"),
+        ("3:30", "साढ़े तीन बजे"),
+        ("14:30 बजे", "ढाई बजे"),
+        ("13:45", "पौने दो बजे"),
+        ("25:99", "पच्चीस:निन्यानवे"),
+        ("16:9 स्क्रीन", "सोलह:नौ स्क्रीन"),
+        ("50%की", "पचास प्रतिशतकी"),
+        ("1,2,3", "एक,दो,तीन"),
+    ],
+)
+def test_normalize_numbers_hindi_whole_tokens(text: str, expected: str):
+    from pocket_tts.models.text_chunking import normalize_numbers
+
+    assert normalize_numbers(text, mode="hindi") == expected
+
+
+@pytest.mark.parametrize(
+    "text, expected",
+    [
+        ("12th floor", "twelfth floor"),
+        ("20th", "twentieth"),
+        ("21st century", "twenty-first century"),
+        ("$1 only", "one dollar only"),
+        ("$5 million", "five million dollars"),
+        ("$1,250", "one thousand two hundred fifty dollars"),
+        ("Meet at 3:30", "Meet at three thirty"),
+        ("At 7:05", "At seven oh five"),
+        ("At 9:00", "At nine o'clock"),
+        ("It costs 1,250 rupees", "It costs one thousand two hundred fifty rupees"),
+        ("Pi is 3.14.", "Pi is three point one four."),
+        ("2,500,000 people", "2,500,000 people"),
+        ("16:9 screen", "sixteen:nine screen"),
+    ],
+)
+def test_normalize_numbers_english_whole_tokens(text: str, expected: str):
+    from pocket_tts.models.text_chunking import normalize_numbers
+
+    assert normalize_numbers(text, mode="english") == expected
+
+
+def test_number_fixes_keep_abbreviations_transliteration_and_changes():
+    from pocket_tts.models.text_chunking import normalize_text
+
+    norm, changes = normalize_text("KYC meeting 1:30 बजे, ₹1,25,000 और 3.14 प्रतिशत", mode="auto")
+    assert norm == "केवाईसी मीटिंग डेढ़ बजे, एक लाख पच्चीस हज़ार रुपये और तीन दशमलव एक चार प्रतिशत"
+    kinds = {c["type"] for c in changes}
+    assert {"abbreviation", "loanword", "time", "currency", "number"} <= kinds
+
+
 def test_normalize_hinglish_loanwords():
     from pocket_tts.models.text_chunking import normalize_text
 

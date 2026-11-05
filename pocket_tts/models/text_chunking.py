@@ -6,6 +6,7 @@ boundaries and regrouped into chunks that fit `max_tokens`.
 
 import logging
 import re
+from collections.abc import Callable
 
 from pocket_tts.modules.text_conditioner import Tokenizer
 
@@ -201,19 +202,6 @@ _HINDI_ORDINALS = {
     8: "आठवाँ",
     9: "नौवाँ",
     10: "दसवाँ",
-}
-
-_ENG_ORDINALS = {
-    1: "first",
-    2: "second",
-    3: "third",
-    4: "fourth",
-    5: "fifth",
-    6: "sixth",
-    7: "seventh",
-    8: "eighth",
-    9: "ninth",
-    10: "tenth",
 }
 
 _HINDI_COMMON_ABBR = {
@@ -711,6 +699,146 @@ def transliterate_english_to_devanagari(word: str) -> str:
     return "".join(res) + suffix_deva
 
 
+# A time, not part of a longer number such as "1:30:05".
+_TIME = r"(?<![\w.,:])(\d{1,2}):(\d\d)(?![\w:]|[.,]\d)"
+_ENGLISH_TIME = re.compile(_TIME)
+_HINDI_TIME = re.compile(_TIME + r"(?:\s*बजे)?")
+# A whole number token ("1,250", "822.95") with an optional currency sign, scale word, percent sign
+# or ordinal suffix. Commas and periods belong to the token, so a number is never read in halves.
+_NUMBER_START = r"(?<![\w.,:])({currency})?(\d[\d,.]*\d|\d)(\s(?:{scales})(?![\wऀ-ॿ]))?"
+_NUMBER_END = r"(?:\s*(%)|(st|nd|rd|th)(?!\w)|(?!\w|:\d))"
+_HINDI_NUMBER = re.compile(
+    _NUMBER_START.format(currency=r"₹\s*|\$\s*", scales="हज़ार|हजार|लाख|करोड़") + _NUMBER_END,
+    re.IGNORECASE,
+)
+_ENGLISH_NUMBER = re.compile(
+    _NUMBER_START.format(currency=r"\$\s*", scales="thousand|million|billion|trillion")
+    + _NUMBER_END,
+    re.IGNORECASE,
+)
+# Colon-joined digits that are not a time, like "16:9": read digit run by digit run.
+_COLON_NUMBERS = re.compile(r"(?<![\w.,:])\d+(?::\d+)+(?![\w:])")
+# Indian "1,25,000" or Western "125,000" grouping.
+_HINDI_GROUPING = re.compile(r"\d{1,3}(?:,\d\d)*,\d{3}")
+_ENGLISH_GROUPING = re.compile(r"\d{1,3}(?:,\d{3})+")
+_ENGLISH_IRREGULAR_ORDINALS = {
+    "one": "first",
+    "two": "second",
+    "three": "third",
+    "five": "fifth",
+    "eight": "eighth",
+    "nine": "ninth",
+    "twelve": "twelfth",
+}
+_HINDI_CURRENCIES = {"₹": "रुपये", "$": "डॉलर"}
+
+
+def _record(changes: list[dict[str, str]], m: re.Match[str], spoken: str, kind: str) -> str:
+    changes.append({"from": m.group(0).strip(), "to": spoken, "type": kind})
+    return spoken
+
+
+def _read_digits(
+    digits: str, grouping: re.Pattern[str], cardinal: Callable[[int], str], point: str
+) -> str:
+    """Read a digit token whole, decimals digit by digit ("3.14" -> "three point one four").
+
+    A token that is not a plain, grouped or decimal number ("1.2.3", "1,2,3") is read one digit run
+    at a time rather than left as digits, which the tokenizer may drop.
+    """
+    whole, dot, decimals = digits.partition(".")
+    valid_whole = whole.isdigit() or grouping.fullmatch(whole)
+    if not valid_whole or (dot and not decimals.isdigit()):
+        return re.sub(r"\d+", lambda run: cardinal(int(run.group(0))), digits)
+    words = cardinal(int(whole.replace(",", "")))
+    if dot:
+        words += f" {point} " + " ".join(cardinal(int(d)) for d in decimals)
+    return words
+
+
+def _read_colon_numbers(m: re.Match[str], cardinal: Callable[[int], str]) -> str:
+    return re.sub(r"\d+", lambda run: cardinal(int(run.group(0))), m.group(0))
+
+
+def _hindi_time(m: re.Match[str], changes: list[dict[str, str]]) -> str:
+    hours, minutes = int(m.group(1)), int(m.group(2))
+    if hours > 23 or minutes > 59:
+        return m.group(0)
+    hour = hours % 12 or 12
+    spoken_hour = _number_to_hindi(hour)
+    if minutes == 0:
+        spoken = f"{spoken_hour} बजे"
+    elif minutes == 15:
+        spoken = f"सवा {spoken_hour} बजे"
+    elif minutes == 30:
+        spoken = {1: "डेढ़ बजे", 2: "ढाई बजे"}.get(hour, f"साढ़े {spoken_hour} बजे")
+    elif minutes == 45:
+        spoken = f"पौने {_number_to_hindi(hour % 12 + 1)} बजे"
+    else:
+        spoken = f"{spoken_hour} बजकर {_number_to_hindi(minutes)} मिनट"
+    return _record(changes, m, spoken, "time")
+
+
+def _hindi_number(m: re.Match[str], changes: list[dict[str, str]]) -> str:
+    currency, digits, scale, percent, ordinal_suffix = m.groups()
+    scale = scale or ""
+    if ordinal_suffix:
+        plain = digits.replace(",", "")
+        if not plain.isdigit():
+            return m.group(0)
+        n = int(plain)
+        spoken = _HINDI_ORDINALS.get(n, f"{_number_to_hindi(n)}वाँ") + scale
+        return _record(changes, m, spoken, "ordinal")
+    spoken = _read_digits(digits, _HINDI_GROUPING, _number_to_hindi, "दशमलव") + scale
+    if currency:
+        return _record(changes, m, f"{spoken} {_HINDI_CURRENCIES[currency.strip()]}", "currency")
+    if percent:
+        return _record(changes, m, f"{spoken} प्रतिशत", "percentage")
+    return _record(changes, m, spoken, "number")
+
+
+def _english_ordinal(n: int) -> str:
+    def last_word(m: re.Match[str]) -> str:
+        word = m.group(0)
+        if word in _ENGLISH_IRREGULAR_ORDINALS:
+            return _ENGLISH_IRREGULAR_ORDINALS[word]
+        return word[:-1] + "ieth" if word.endswith("y") else word + "th"
+
+    return re.sub(r"[a-z]+$", last_word, _number_to_english(n))
+
+
+def _english_time(m: re.Match[str], changes: list[dict[str, str]]) -> str:
+    hours, minutes = int(m.group(1)), int(m.group(2))
+    if hours > 23 or minutes > 59:
+        return m.group(0)
+    spoken_hour = _number_to_english(hours)
+    if minutes == 0:
+        spoken = spoken_hour + (" o'clock" if hours <= 12 else " hundred")
+    else:
+        spoken = f"{spoken_hour} {'oh ' if minutes < 10 else ''}{_number_to_english(minutes)}"
+    return _record(changes, m, spoken, "time")
+
+
+def _english_number(m: re.Match[str], changes: list[dict[str, str]]) -> str:
+    currency, digits, scale, percent, ordinal_suffix = m.groups()
+    scale = scale or ""
+    plain = digits.replace(",", "")
+    # _number_to_english stops at a million: such values stay as they are, not half read.
+    if plain.isdigit() and int(plain) >= 1_000_000:
+        return m.group(0)
+    if ordinal_suffix:
+        if not plain.isdigit():
+            return m.group(0)
+        return _record(changes, m, _english_ordinal(int(plain)) + scale, "ordinal")
+    spoken = _read_digits(digits, _ENGLISH_GROUPING, _number_to_english, "point") + scale
+    if currency:
+        unit = "dollar" if digits == "1" and not scale else "dollars"
+        return _record(changes, m, f"{spoken} {unit}", "currency")
+    if percent:
+        return _record(changes, m, f"{spoken} percent", "percentage")
+    return _record(changes, m, spoken, "number")
+
+
 def normalize_text(text: str, mode: str = "auto") -> tuple[str, list[dict[str, str]]]:
     """Normalize numeric digits, ordinals, currencies, abbreviations, and Hinglish loanwords."""
     changes: list[dict[str, str]] = []
@@ -726,58 +854,7 @@ def normalize_text(text: str, mode: str = "auto") -> tuple[str, list[dict[str, s
     is_hi = (mode in ("hindi", "hinglish")) or has_devanagari or is_roman_hinglish
 
     if is_hi:
-        # Currency: ₹ and $
-        def _repl_inr(m: re.Match[str]) -> str:
-            val = int(m.group(1))
-            rep = f"{_number_to_hindi(val)} रुपये"
-            changes.append({"from": m.group(0), "to": rep, "type": "currency"})
-            return rep
-
-        text = re.sub(r"₹\s*(\d+)", _repl_inr, text)
-
-        def _repl_usd(m: re.Match[str]) -> str:
-            val = int(m.group(1))
-            rep = f"{_number_to_hindi(val)} डॉलर"
-            changes.append({"from": m.group(0), "to": rep, "type": "currency"})
-            return rep
-
-        text = re.sub(r"\$\s*(\d+)", _repl_usd, text)
-
-        # Percentage: %
-        def _repl_pct(m: re.Match[str]) -> str:
-            val = int(m.group(1))
-            rep = f"{_number_to_hindi(val)} प्रतिशत"
-            changes.append({"from": m.group(0), "to": rep, "type": "percentage"})
-            return rep
-
-        text = re.sub(r"(\d+)\s*%", _repl_pct, text)
-
-        # Ordinals: 1st, 2nd, 3rd, 10th
-        def _repl_ord(m: re.Match[str]) -> str:
-            val = int(m.group(1))
-            rep = _HINDI_ORDINALS.get(val, f"{_number_to_hindi(val)}वाँ")
-            changes.append({"from": m.group(0), "to": rep, "type": "ordinal"})
-            return rep
-
-        text = re.sub(r"\b(\d+)(?:st|nd|rd|th)\b", _repl_ord, text, flags=re.IGNORECASE)
-
-        # Time: HH:MM
-        def _repl_time(m: re.Match[str]) -> str:
-            hh, mm = int(m.group(1)), int(m.group(2))
-            if mm == 0:
-                rep = f"{_number_to_hindi(hh)} बजे"
-            elif mm == 30:
-                rep = f"साढ़े {_number_to_hindi(hh)} बजे"
-            elif mm == 15:
-                rep = f"सवा {_number_to_hindi(hh)} बजे"
-            elif mm == 45:
-                rep = f"पौने {_number_to_hindi((hh % 12) + 1)} बजे"
-            else:
-                rep = f"{_number_to_hindi(hh)} बजकर {_number_to_hindi(mm)} मिनट"
-            changes.append({"from": m.group(0).strip(), "to": rep, "type": "time"})
-            return rep
-
-        text = re.sub(r"\b(\d{1,2}):(\d{2})(?:\s*बजे)?", _repl_time, text)
+        text = _HINDI_TIME.sub(lambda m: _hindi_time(m, changes), text)
 
         # Common abbreviations
         for abbr, word in _HINDI_COMMON_ABBR.items():
@@ -786,14 +863,8 @@ def normalize_text(text: str, mode: str = "auto") -> tuple[str, list[dict[str, s
                 text = re.sub(pattern, word, text)
                 changes.append({"from": abbr, "to": word, "type": "abbreviation"})
 
-        # Standalone numbers
-        def _repl_num(m: re.Match[str]) -> str:
-            val = int(m.group(0))
-            rep = _number_to_hindi(val)
-            changes.append({"from": m.group(0), "to": rep, "type": "number"})
-            return rep
-
-        text = re.sub(r"\b\d+\b", _repl_num, text)
+        text = _HINDI_NUMBER.sub(lambda m: _hindi_number(m, changes), text)
+        text = _COLON_NUMBERS.sub(lambda m: _read_colon_numbers(m, _number_to_hindi), text)
 
         # English loanwords in Hindi/Hinglish (e.g. 'reschedule' -> 'रीशेड्यूल', 'meeting' -> 'मीटिंग')
         def _repl_loanword(m: re.Match[str]) -> str:
@@ -819,38 +890,9 @@ def normalize_text(text: str, mode: str = "auto") -> tuple[str, list[dict[str, s
         text = re.sub(r"\b[a-zA-Z]+\b", _repl_latin_word, text)
 
     else:
-        # English normalization
-        def _repl_usd_en(m: re.Match[str]) -> str:
-            val = int(m.group(1))
-            rep = f"{_number_to_english(val)} dollars"
-            changes.append({"from": m.group(0), "to": rep, "type": "currency"})
-            return rep
-
-        text = re.sub(r"\$\s*(\d+)", _repl_usd_en, text)
-
-        def _repl_pct_en(m: re.Match[str]) -> str:
-            val = int(m.group(1))
-            rep = f"{_number_to_english(val)} percent"
-            changes.append({"from": m.group(0), "to": rep, "type": "percentage"})
-            return rep
-
-        text = re.sub(r"(\d+)\s*%", _repl_pct_en, text)
-
-        def _repl_ord_en(m: re.Match[str]) -> str:
-            val = int(m.group(1))
-            rep = _ENG_ORDINALS.get(val, f"{_number_to_english(val)}th")
-            changes.append({"from": m.group(0), "to": rep, "type": "ordinal"})
-            return rep
-
-        text = re.sub(r"\b(\d+)(?:st|nd|rd|th)\b", _repl_ord_en, text, flags=re.IGNORECASE)
-
-        def _repl_num_en(m: re.Match[str]) -> str:
-            val = int(m.group(0))
-            rep = _number_to_english(val)
-            changes.append({"from": m.group(0), "to": rep, "type": "number"})
-            return rep
-
-        text = re.sub(r"\b\d+\b", _repl_num_en, text)
+        text = _ENGLISH_TIME.sub(lambda m: _english_time(m, changes), text)
+        text = _ENGLISH_NUMBER.sub(lambda m: _english_number(m, changes), text)
+        text = _COLON_NUMBERS.sub(lambda m: _read_colon_numbers(m, _number_to_english), text)
 
     return text, changes
 
