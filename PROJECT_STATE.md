@@ -1,6 +1,6 @@
 # Project State & Handoff (DrOpenSource Pocket TTS)
 
-*Last Updated: November 4, 2026*
+*Last Updated: November 5, 2026*
 
 ---
 
@@ -13,6 +13,7 @@
   - *Title*: `Add Indic punctuation (danda) sentence chunking and text normalization`
   - *Status*: **OPEN & 100% GREEN CI** (pytest on Python 3.14, rust, ty 3.10, ty 3.14 all passing).
   - *Action*: **DO NOT CLOSE.** Awaiting Kyutai maintainer review/merge.
+- **Production Deployment**: **`https://clone.taqnik.in`** (Running on Hostinger VPS via Dokploy / Docker)
 
 ---
 
@@ -25,8 +26,8 @@ xdev     -> https://github.com/Xdev200/pocket-tts          (Old clone reference)
 ```
 
 ### Branches:
-1. **`personal-dev`** *(DEFAULT LOCAL BRANCH)*:
-   - Contains all production features, web UI enhancements, `.safetensors` persona caching, 7 Indian presets, and the comprehensive Voice Cloning Guide.
+1. **`personal-dev`** *(DEFAULT LOCAL BRANCH & DOKPLOY TARGET)*:
+   - Contains all production features, default multilingual engine (`DEFAULT_LANGUAGE = "multilingual"`), 7 Indian voice presets (Pooja, Priya, Neha, Kabir, Rohan, Aarav, Dev), `.safetensors` persona caching, text normalizer, and Docker configurations.
    - Pushed and backed up on GitHub at `DrOpenSource/pocket-tts:personal-dev`.
 2. **`pr/indic-punctuation-and-normalizer`**:
    - Clean, minimal 4-file branch backing upstream PR #412.
@@ -39,6 +40,7 @@ xdev     -> https://github.com/Xdev200/pocket-tts          (Old clone reference)
 
 | Feature | Location | Status |
 | :--- | :--- | :--- |
+| **Multilingual Model Default** | `pocket_tts/default_parameters.py` | Sets `multilingual` (`Thanushttk/pocket-tts-multilingual`) as default language |
 | **Indic Danda Sentence Chunking** | `pocket_tts/models/text_chunking.py` | Recognizes `।` and `॥` as terminal punctuation |
 | **Text Normalization Engine** | `pocket_tts/models/text_chunking.py` | Expands digits (`10` $\to$ `दस`), time (`3:30`), currency (`₹`, `$`), ordinals |
 | **7 Indian Voice Presets** | `pocket_tts/utils/utils.py` | Pooja, Priya, Neha, Kabir, Rohan, Aarav, Dev |
@@ -55,15 +57,16 @@ xdev     -> https://github.com/Xdev200/pocket-tts          (Old clone reference)
 - Check if Kyutai maintainers have requested any minor adjustments.
 - If edits are requested, apply them on `pr/indic-punctuation-and-normalizer` and push.
 
-### Task 2: Host on Server via Cloudflare Tunnel (`taqnik.in`)
-- **Server Startup**: `uv run pocket-tts serve --port 8000`
-- **Cloudflare Tunnel (`cloudflared`)**:
-  ```powershell
-  cloudflared tunnel create pocket-tts-tunnel
-  cloudflared tunnel route dns pocket-tts-tunnel tts.taqnik.in
-  cloudflared tunnel run --url http://localhost:8000 pocket-tts-tunnel
+### Task 2: Host on Server (`clone.taqnik.in`)
+- **Dokploy Deployment Command**:
+  ```bash
+  sh -c "cd /app && ([ -d .git ] && git pull origin personal-dev || git clone -b personal-dev https://github.com/DrOpenSource/pocket-tts.git .) ; uv run pocket-tts serve --language multilingual --host 0.0.0.0 --port 8000"
   ```
-- **Security & Rate-Limiting**: Enable Cloudflare Access or basic token authentication for personal use.
+- **Docker Compose**: `docker compose up -d --build` (runs `--language multilingual` on port 8000)
+- **Cloudflare DNS**:
+  - `A` record: `clone` -> `[VPS IP]` (Proxied / Orange Cloud)
+  - Cloudflare Origin Rule: Rewrite destination port to `8000` for `clone.taqnik.in`
+  - SSL/TLS: Flexible
 
 ### Task 3: PR 2 Preparation (Precomputed Persona `.safetensors` Export)
 - Once PR #412 is merged, branch off upstream `main` into `pr/safetensors-persona-caching` to propose the `.safetensors` persona export feature upstream.
@@ -80,5 +83,5 @@ uv run pytest -n 3 -v tests/test_split_sentences.py tests/test_python_api.py
 uv run ty check pocket_tts tests
 
 # Start local web app
-uv run pocket-tts serve
+uv run pocket-tts serve --language multilingual
 ```

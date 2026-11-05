@@ -29,7 +29,7 @@ After=network.target
 Type=simple
 User=$(whoami)
 WorkingDirectory=$INSTALL_DIR
-ExecStart=$UV_BIN run pocket-tts serve --host 0.0.0.0 --port 8000
+ExecStart=$UV_BIN run pocket-tts serve --language multilingual --host 0.0.0.0 --port 8000
 Restart=always
 RestartSec=5
 Environment=PYTHONUNBUFFERED=1

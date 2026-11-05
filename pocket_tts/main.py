@@ -57,6 +57,9 @@ web_app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
+        "http://localhost:8000",
+        "https://clone.taqnik.in",
+        "https://taqnik.in",
         "https://pod1-10007.internal.kyutai.org",
         "https://kyutai.org",
     ],

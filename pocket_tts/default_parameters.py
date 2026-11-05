@@ -1,6 +1,6 @@
 from pocket_tts.utils.utils import _ORIGINS_OF_PREDEFINED_VOICES
 
-DEFAULT_LANGUAGE = "english"
+DEFAULT_LANGUAGE = "multilingual"
 DEFAULT_TEMPERATURE = 0.3
 DEFAULT_SAMPLER_DECODE_STEPS = 1
 DEFAULT_NOISE_CLAMP = None
@@ -69,8 +69,11 @@ DEFAULT_VOICE_FOR_LANGUAGE = {
     "portuguese": "rafael",
     "french": "estelle",
     "dutch": "daan",
+    "hindi": "pooja",
+    "hinglish": "rohan",
+    "multilingual": "rohan",
 }
-DEFAULT_VOICE_FALLBACK = "alba"
+DEFAULT_VOICE_FALLBACK = "rohan"
 # Predefined voices are states precomputed with the released weights of a language model,
 # so neither a custom config nor a training checkpoint can use them. For those we default
 # to the audio file behind the fallback voice: any model can clone it.
@@ -94,9 +97,8 @@ def get_default_voice_for_language(
     """
     if config is not None or checkpoint is not None:
         return DEFAULT_VOICE_FOR_CUSTOM_MODEL
-    if language is not None and any(l in language for l in ("hindi", "hinglish", "multilingual")):
-        return DEFAULT_VOICE_FOR_CUSTOM_MODEL
+    lang_to_check = language if language is not None else DEFAULT_LANGUAGE
     for key, voice in DEFAULT_VOICE_FOR_LANGUAGE.items():
-        if language is not None and key in language:
+        if lang_to_check is not None and key in lang_to_check:
             return voice
     return DEFAULT_VOICE_FALLBACK
