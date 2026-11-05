@@ -45,9 +45,9 @@ xdev     -> https://github.com/Xdev200/pocket-tts          (Old clone reference)
 | **Clean Header & Navigation**         | `pocket_tts/static/index.html`             | "Clone Voice Studio" branding, clean subtitle, removed clutter badges, 3-step progress bar                   |
 | **Dynamic Preset Filtering**          | `pocket_tts/static/index.html`             | Filter chips for 🇮🇳 Indian Voices (7), 🇬🇧 English (9), and All Voices (16) with real-time search            |
 | **Multilingual Model Default**        | `pocket_tts/default_parameters.py`         | Sets `multilingual` (`Thanushttk/pocket-tts-multilingual`) as default language                                |
-| **Algorithmic G2P & Hinglish Engine** | `pocket_tts/models/text_chunking.py`       | 100+ curated loanwords + algorithmic G2P phonemizer fallback for unlisted English words + Romanized Hindi     |
+| **Algorithmic G2P & Hinglish Engine** | `pocket_tts/indic_normalizer.py`           | 100+ curated loanwords + algorithmic G2P phonemizer fallback for unlisted English words + Romanized Hindi     |
 | **Indic Danda Sentence Chunking**     | `pocket_tts/models/text_chunking.py`       | Recognizes `।` and `॥` as terminal punctuation                                                                |
-| **Text Normalization Engine**         | `pocket_tts/models/text_chunking.py`       | Expands digits (`10` $\to$ `दस`), time, currency, ordinals, Indian grouping (`₹1,25,000`), spoken decimals      |
+| **Text Normalization Engine**         | `pocket_tts/indic_normalizer.py`           | Expands digits (`10` $\to$ `दस`), time, currency, ordinals, Indian grouping (`₹1,25,000`), spoken decimals      |
 | **7 Indian Voice Presets**            | `pocket_tts/utils/utils.py`                | Pooja, Priya, Neha, Kabir, Rohan, Aarav, Dev with instant sample auditioning                                  |
 | **Precomputed Voice Personas**        | `pocket_tts/main.py` + Web UI              | Instant `.safetensors` persona export & drag-and-drop                                                         |
 | **Hindi Model Configs**               | `pocket_tts/config/hindi*.yaml`            | Native configs for Lite (6L) and Base (12L) models                                                            |

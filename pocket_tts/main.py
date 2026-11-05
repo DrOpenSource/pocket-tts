@@ -160,7 +160,7 @@ class NormalizeRequest(BaseModel):
 @web_app.post("/api/normalize")
 def api_normalize(req: NormalizeRequest) -> dict[str, object]:
     """Normalize text (numbers, ordinals, currencies, abbreviations) based on target language mode."""
-    from pocket_tts.models.text_chunking import normalize_text
+    from pocket_tts.indic_normalizer import normalize_text
 
     normalized, changes = normalize_text(req.text, mode=req.mode)
     return {"original": req.text, "normalized": normalized, "changes": changes, "mode": req.mode}
@@ -249,7 +249,7 @@ def text_to_speech(
     """
     if not text.strip():
         raise HTTPException(status_code=400, detail="Text cannot be empty")
-    from pocket_tts.models.text_chunking import normalize_text
+    from pocket_tts.indic_normalizer import normalize_text
 
     if normalize_mode != "off":
         text, _ = normalize_text(text, mode=normalize_mode)
@@ -458,7 +458,7 @@ def generate(
         if text == "-":
             # Read text from stdin
             text = sys.stdin.read()
-        from pocket_tts.models.text_chunking import normalize_numbers
+        from pocket_tts.indic_normalizer import normalize_numbers
 
         text = normalize_numbers(text)
 
