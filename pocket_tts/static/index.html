@@ -3,43 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pocket TTS Studio - Multi-Language & Voice Cloning</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Taqnik Voice Studio - Creator Voice Cloning & Speech</title>
+
+    <!-- Google Material 3 Web Components (Official NPM package @material/web) -->
+    <script type="module" src="https://esm.sh/@material/web@1.4.1/all.js?bundle"></script>
+
+    <!-- Google Fonts: Roboto & Material Symbols Outlined -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+
+    <!-- Tailwind CSS for Responsive Layout & Grid -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
     <style>
+        :root {
+            --md-sys-color-primary: #00629e;
+            --md-sys-color-on-primary: #ffffff;
+            --md-sys-color-primary-container: #cfe5ff;
+            --md-sys-color-on-primary-container: #001d35;
+            --md-sys-color-surface: #f8fafc;
+            --md-sys-color-surface-container: #ffffff;
+            --md-sys-color-surface-container-high: #f1f5f9;
+            --md-sys-color-outline: #94a3b8;
+            --md-sys-color-outline-variant: #e2e8f0;
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--md-sys-color-surface);
+            color: #1e293b;
         }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+
+        .step-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 1.25rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease-in-out;
+        }
+
+        .step-card:focus-within {
+            border-color: #93c5fd;
+            box-shadow: 0 4px 12px -2px rgba(0, 98, 158, 0.08);
+        }
+
         .voice-card {
+            border: 1.5px solid #e2e8f0;
+            border-radius: 1rem;
             transition: all 0.15s ease-in-out;
+            cursor: pointer;
+            background: #ffffff;
         }
+
         .voice-card:hover {
-            transform: translateY(-1px);
+            border-color: #94a3b8;
+            background: #f8fafc;
         }
+
         .voice-card.selected {
-            border-color: #2563eb;
-            background-color: #eff6ff;
-            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+            border-color: #00629e;
+            background-color: #f0f7ff;
+            box-shadow: 0 0 0 2px rgba(0, 98, 158, 0.2);
         }
-        .tab-btn.active {
-            border-color: #2563eb;
-            color: #2563eb;
-            background-color: #eff6ff;
+
+        /* Pulse animation for mic recording */
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 14px rgba(239, 68, 68, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
         }
-        .filter-chip.active {
-            background-color: #2563eb;
-            color: #ffffff;
-            border-color: #2563eb;
+
+        .recording-pulse {
+            animation: pulse-ring 1.5s infinite;
         }
-        .spinner {
-            animation: spin 0.8s linear infinite;
-        }
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
+
         ::-webkit-scrollbar {
             width: 6px;
             height: 6px;
@@ -49,995 +93,1152 @@
         }
         ::-webkit-scrollbar-thumb {
             background: #cbd5e1;
-            border-radius: 3px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
+            border-radius: 4px;
         }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900 min-h-screen py-8 px-4">
+<body class="min-h-screen py-4 sm:py-8 px-3 sm:px-6">
+
     <div class="max-w-4xl mx-auto space-y-6">
 
-        <!-- Top Header -->
+        <!-- Studio Header -->
         <header class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-200 gap-3">
             <div>
-                <div class="flex items-center gap-2">
-                    <h1 class="text-2xl font-bold tracking-tight text-slate-900">Pocket TTS Studio</h1>
-                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-100 text-blue-800">
-                        v4.0 + Hindi & Hinglish
+                <div class="flex items-center gap-2.5">
+                    <span class="p-2 rounded-xl bg-blue-50 text-blue-700">
+                        <span class="material-symbols-outlined text-2xl">record_voice_over</span>
                     </span>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">Taqnik Voice Studio</h1>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-800">
+                                Creator Edition
+                            </span>
+                        </div>
+                        <p class="text-xs sm:text-sm text-slate-500 mt-0.5">Zero-shot voice cloning & natural Hindi/Hinglish speech synthesis</p>
+                    </div>
                 </div>
-                <p class="text-sm text-slate-500 mt-0.5">Real-time CPU text-to-speech with zero-shot voice cloning</p>
             </div>
-            <div class="flex items-center gap-2 text-xs text-slate-500">
-                <span class="flex items-center gap-1.5 bg-white border border-slate-200 px-2.5 py-1 rounded-full shadow-sm">
+
+            <!-- Badges -->
+            <div class="flex items-center gap-2 text-xs">
+                <span class="inline-flex items-center gap-1.5 bg-white border border-slate-200 px-3 py-1 rounded-full shadow-xs text-slate-700 font-medium">
                     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                     24 kHz Streaming
                 </span>
-                <span class="bg-white border border-slate-200 px-2.5 py-1 rounded-full shadow-sm font-medium text-slate-700">
-                    CPU Accelerated
+                <span class="inline-flex items-center gap-1 bg-white border border-slate-200 px-3 py-1 rounded-full shadow-xs text-slate-600">
+                    <span class="material-symbols-outlined text-sm text-blue-600">bolt</span>
+                    Real-time CPU
                 </span>
             </div>
         </header>
 
-        <!-- Script-Mixing Guide & Recommendations Banner -->
-        <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-900">
-            <div class="flex items-start gap-3">
-                <span class="text-xl">💡</span>
-                <div class="space-y-1.5 flex-1">
-                    <div class="flex items-center justify-between">
-                        <h3 class="font-semibold text-amber-950">Tip for Hindi & Hinglish (Roman vs. Devanagari)</h3>
-                        <button id="toggle-tip-btn" class="text-xs text-amber-700 hover:text-amber-900 underline font-medium">
-                            Learn why
-                        </button>
+        <!-- Step Indicator Bar -->
+        <nav aria-label="Progress" class="flex items-center justify-between gap-2 px-2 py-1 text-xs sm:text-sm font-medium">
+            <div id="step-nav-1" class="flex items-center gap-2 text-blue-700 font-semibold">
+                <span class="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs">1</span>
+                <span>Voice Identity</span>
+            </div>
+            <div class="flex-1 h-0.5 bg-slate-200 mx-2"></div>
+            <div id="step-nav-2" class="flex items-center gap-2 text-slate-400">
+                <span class="w-6 h-6 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-xs">2</span>
+                <span>Script</span>
+            </div>
+            <div class="flex-1 h-0.5 bg-slate-200 mx-2"></div>
+            <div id="step-nav-3" class="flex items-center gap-2 text-slate-400">
+                <span class="w-6 h-6 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-xs">3</span>
+                <span>Speech</span>
+            </div>
+        </nav>
+
+        <!-- ============================================================ -->
+        <!-- STEP 1: VOICE SELECTION & CLONING (HERO STAGE) -->
+        <!-- ============================================================ -->
+        <section class="step-card p-4 sm:p-6 space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                    <h2 class="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
+                        <span class="text-blue-600 material-symbols-outlined">mic</span>
+                        <span>Step 1: Choose or Clone Your Voice</span>
+                    </h2>
+                    <p class="text-xs sm:text-sm text-slate-500 mt-0.5">Record a sample, upload an audio clip, or pick an Indian character preset</p>
+                </div>
+
+                <!-- Active Voice Chip -->
+                <div id="active-voice-badge" class="inline-flex items-center gap-1.5 bg-blue-50 text-blue-800 border border-blue-200 px-3 py-1 rounded-full text-xs font-medium self-start sm:self-auto">
+                    <span class="material-symbols-outlined text-sm text-blue-600">check_circle</span>
+                    <span>Voice: <strong id="active-voice-name">Rohan (Hinglish)</strong></span>
+                </div>
+            </div>
+
+            <!-- Material 3 Tabs -->
+            <md-tabs id="voice-mode-tabs" aria-label="Voice Options">
+                <md-primary-tab id="tab-record" active>
+                    <span class="material-symbols-outlined" slot="icon">mic</span>
+                    Record My Voice
+                </md-primary-tab>
+                <md-primary-tab id="tab-upload">
+                    <span class="material-symbols-outlined" slot="icon">cloud_upload</span>
+                    Upload Audio
+                </md-primary-tab>
+                <md-primary-tab id="tab-presets">
+                    <span class="material-symbols-outlined" slot="icon">group</span>
+                    Preset Voices (7)
+                </md-primary-tab>
+                <md-primary-tab id="tab-saved">
+                    <span class="material-symbols-outlined" slot="icon">history_edu</span>
+                    Saved Voices
+                </md-primary-tab>
+            </md-tabs>
+
+            <!-- SUB-PANEL 1: IN-BROWSER RECORDING -->
+            <div id="panel-record" class="space-y-4 pt-2">
+                <div class="bg-blue-50/70 border border-blue-100 rounded-2xl p-4 sm:p-5 space-y-3.5">
+                    <div class="flex items-start gap-3">
+                        <span class="p-2 rounded-xl bg-blue-100 text-blue-700">
+                            <span class="material-symbols-outlined text-xl">record_voice_over</span>
+                        </span>
+                        <div class="space-y-1">
+                            <h3 class="text-xs sm:text-sm font-semibold text-blue-950">Recommended 10-Second Reading Script</h3>
+                            <p class="text-xs sm:text-sm text-blue-900 leading-relaxed font-normal bg-white/80 p-3 rounded-xl border border-blue-200/60">
+                                "नमस्ते, मैं अपना वॉयस क्लोन टेस्ट कर रहा हूँ। कल की मीटिंग तीन बजे रीशेड्यूल कर दी गई है और नया लिंक भेज दिया गया है।"
+                            </p>
+                            <p class="text-[11px] text-blue-700">Speak clearly at normal conversational volume in a quiet environment.</p>
+                        </div>
                     </div>
-                    <p class="text-amber-800 text-xs sm:text-sm">
-                        For the <strong>smoothest pronunciation</strong> and zero glitches at word transitions, write English loanwords in <strong>Devanagari</strong> (e.g., <em>"मीटिंग"</em> instead of <em>"meeting"</em>, <em>"लिंक"</em> instead of <em>"link"</em>).
-                    </p>
-                    <div id="tip-details" class="hidden pt-2 border-t border-amber-200 text-xs text-amber-800 space-y-1">
-                        <p><strong>Why does mixed script struggle?</strong> When switching scripts mid-sentence (Devanagari ⇄ Latin), the SentencePiece tokenizer breaks BPE prefixes at script boundaries, causing token fragmentation. In addition, the flow-matching acoustic head has to abruptly jump formant distributions.</p>
-                        <p><strong>3 Recommendations:</strong></p>
-                        <ul class="list-disc pl-5 space-y-0.5">
-                            <li><strong>Best:</strong> Transliterate loanwords to Devanagari (<em>"कल की मीटिंग तीन बजे है, और अपडेटेड लिंक भेज दिया है"</em>). The model pronounces English words with natural Indian phonetics!</li>
-                            <li><strong>If using Latin:</strong> Ensure clear spaces and add commas before English clauses (<em>"कल की meeting, तीन बजे है"</em>) to let the acoustic state reset.</li>
-                            <li><strong>Spell numbers as words:</strong> Write numbers as words (e.g. <em>"तीन बजे"</em> instead of <em>"3 बजे"</em>).</li>
-                        </ul>
+
+                    <!-- Recording Controls & Visualizer -->
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+                        <div class="flex items-center gap-3 w-full sm:w-auto">
+                            <md-filled-button id="btn-start-record" class="w-full sm:w-auto">
+                                <span class="material-symbols-outlined" slot="icon">mic</span>
+                                <span id="record-btn-label">Start Recording (10s)</span>
+                            </md-filled-button>
+
+                            <md-outlined-button id="btn-stop-record" class="hidden">
+                                <span class="material-symbols-outlined" slot="icon">stop</span>
+                                Stop
+                            </md-outlined-button>
+                        </div>
+
+                        <!-- Live Visualizer / Timer -->
+                        <div id="record-status-container" class="flex items-center gap-3 text-xs font-medium text-slate-600 w-full sm:w-auto justify-between sm:justify-end">
+                            <span id="record-timer" class="font-mono text-slate-700 bg-white px-2 py-1 rounded border border-slate-200">00:00 / 00:10</span>
+                            <div class="w-32 sm:w-40">
+                                <md-linear-progress id="record-progress" value="0"></md-linear-progress>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Live Audio Level Meter Canvas -->
+                    <canvas id="meter-canvas" class="w-full h-2 rounded bg-slate-200 hidden"></canvas>
+
+                    <!-- Preview Recorded Audio Player -->
+                    <div id="recorded-preview-box" class="hidden bg-white p-3.5 rounded-xl border border-emerald-200 space-y-2.5">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div class="flex items-center gap-2 text-emerald-800 text-xs font-semibold">
+                                <span class="material-symbols-outlined text-base text-emerald-600">check_circle</span>
+                                <span>Voice Sample Ready</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <input type="text" id="voice-save-name" placeholder="Name your voice (e.g. My Voice)" class="text-xs border border-slate-300 rounded-lg px-2.5 py-1 outline-none focus:ring-1 focus:ring-blue-500 bg-slate-50" />
+                                <md-filled-tonal-button id="btn-save-voice" class="text-xs">
+                                    <span class="material-symbols-outlined" slot="icon">save</span>
+                                    Save to Browser
+                                </md-filled-tonal-button>
+                            </div>
+                        </div>
+                        <audio id="recorded-audio" controls class="w-full h-8"></audio>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Main Card: Text Input & Prompts -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-4">
+            <!-- SUB-PANEL 2: FILE UPLOAD -->
+            <div id="panel-upload" class="hidden space-y-3 pt-2">
+                <div id="drop-zone" class="border-2 border-dashed border-slate-300 rounded-2xl p-6 sm:p-8 text-center hover:border-blue-500 bg-slate-50/70 transition cursor-pointer space-y-2">
+                    <input type="file" id="voice-file-input" class="hidden" accept=".wav,.mp3,.flac,.ogg,.m4a,.safetensors,audio/*" />
+                    <span class="material-symbols-outlined text-4xl text-slate-400">cloud_upload</span>
+                    <div>
+                        <p class="text-sm font-semibold text-slate-800">Click to upload or Drag & Drop audio</p>
+                        <p class="text-xs text-slate-500 mt-0.5">Supports WAV, MP3, FLAC (5–10s recommended) or precomputed .safetensors Persona</p>
+                    </div>
+                </div>
+
+                <!-- Upload Preview -->
+                <div id="upload-preview-box" class="hidden bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <span class="material-symbols-outlined text-blue-600">audio_file</span>
+                        <div class="min-w-0 text-xs">
+                            <p id="upload-filename" class="font-semibold text-slate-800 truncate">sample.wav</p>
+                            <p id="upload-filesize" class="text-slate-400">0 KB</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <audio id="upload-audio-player" controls class="h-8 max-w-[180px] sm:max-w-[240px]"></audio>
+                        <md-icon-button id="btn-remove-upload" aria-label="Remove">
+                            <span class="material-symbols-outlined text-red-500">delete</span>
+                        </md-icon-button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SUB-PANEL 3: PRESETS (WITH INSTANT AUDITION) -->
+            <div id="panel-presets" class="hidden space-y-3 pt-2">
+                <!-- Filters -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                    <md-chip-set id="preset-filters">
+                        <md-filter-chip label="All Voices" selected data-filter="all"></md-filter-chip>
+                        <md-filter-chip label="🇮🇳 Hindi / Hinglish" data-filter="hi"></md-filter-chip>
+                        <md-filter-chip label="🇬🇧 English" data-filter="en"></md-filter-chip>
+                        <md-filter-chip label="🌍 European" data-filter="other"></md-filter-chip>
+                    </md-chip-set>
+
+                    <div class="relative w-full sm:w-56">
+                        <input
+                            type="text"
+                            id="preset-search-input"
+                            placeholder="Search voices..."
+                            class="w-full text-xs border border-slate-300 rounded-lg pl-3 pr-3 py-1.5 outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+                        />
+                    </div>
+                </div>
+
+                <!-- Grid of Preset Cards with Audition Buttons -->
+                <div id="presets-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-80 overflow-y-auto pr-1">
+                    <!-- Populated dynamically via JS -->
+                </div>
+            </div>
+
+            <!-- SUB-PANEL 4: SAVED VOICES (INDEXEDDB) -->
+            <div id="panel-saved" class="hidden space-y-3 pt-2">
+                <div id="saved-voices-container" class="space-y-2">
+                    <p class="text-xs text-slate-500">Voices you recorded or uploaded are saved privately in your browser storage.</p>
+                    <div id="saved-voices-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <!-- Populated dynamically via IndexedDB -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- STEP 2: SCRIPT (WHAT SHOULD THEY SAY?) -->
+        <!-- ============================================================ -->
+        <section class="step-card p-4 sm:p-6 space-y-3.5">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <label for="text-input" class="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
-                    <span>1. Text to Speak</span>
-                    <span class="text-xs font-normal text-slate-400">(Devanagari, Latin, or mixed)</span>
-                </label>
-                <!-- Quick sample prompts -->
+                <div>
+                    <h2 class="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
+                        <span class="text-blue-600 material-symbols-outlined">edit_note</span>
+                        <span>Step 2: Your Script</span>
+                    </h2>
+                    <p class="text-xs sm:text-sm text-slate-500 mt-0.5">Type in Hindi, Hinglish, or English. Loanwords and numbers are automatically adjusted.</p>
+                </div>
+
+                <!-- Quick Inspiration Chips -->
                 <div class="flex items-center gap-1.5 flex-wrap">
-                    <span class="text-xs text-slate-400 font-medium">Quick Prompts:</span>
-                    <button type="button" class="sample-pill text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded-full border border-slate-200 transition" data-text="नमस्ते दुनिया। मैं Pocket TTS हूँ। मैं छोटे CPU पर भी बहुत तेज़ी से चलने में सक्षम हूँ। आशा है कि आपको मेरी आवाज़ पसंद आएगी।">
-                        🇮🇳 Hindi Pure
+                    <span class="text-xs text-slate-400 font-medium mr-1">Quick:</span>
+                    <button type="button" class="sample-prompt-chip text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded-full border border-slate-200 transition" data-text="नमस्ते दुनिया! मैं तक़नीक वॉइस स्टूडियो हूँ। मैं आपके पर्सनल वॉयस क्लोन के साथ बहुत ही साफ़ आवाज़ में बोल सकता हूँ।">
+                        🇮🇳 Hindi
                     </button>
-                    <button type="button" class="sample-pill text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-full border border-emerald-200 transition font-medium" data-text="कल की मीटिंग तीन बजे है, और अपडेटेड लिंक मैंने भेज दिया है। कृपया समय पर जॉइन करें।">
-                        ✨ Hinglish (Recommended)
+                    <button type="button" class="sample-prompt-chip text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-full border border-emerald-200 transition font-medium" data-text="कल की meeting 10 बजे reschedule कर देना और updated link मुझे भेज देना।">
+                        ✨ Hinglish
                     </button>
-                    <button type="button" class="sample-pill text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded-full border border-slate-200 transition" data-text="कल की meeting तीन बजे reschedule कर देना और updated link मुझे भेज देना।">
-                        🌐 Hinglish (Mixed)
-                    </button>
-                    <button type="button" class="sample-pill text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded-full border border-slate-200 transition" data-text="Hello world! I am Kyutai's Pocket TTS running locally on your CPU. I hope you will like me.">
+                    <button type="button" class="sample-prompt-chip text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded-full border border-slate-200 transition" data-text="Hello! Welcome to Taqnik Voice Studio. This is zero-shot voice cloning running seamlessly on your CPU.">
                         🇬🇧 English
                     </button>
                 </div>
             </div>
 
+            <!-- Main Textarea -->
             <div class="relative">
                 <textarea
                     id="text-input"
-                    class="w-full border border-slate-300 rounded-xl p-3.5 text-base text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                    class="w-full border border-slate-300 rounded-xl p-3.5 text-sm sm:text-base text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
                     rows="4"
-                    placeholder="Enter Hindi, Hinglish, English, or any supported language text..."
+                    placeholder="Enter transcript in Hindi, Hinglish, or English..."
                 >DEFAULT_TEXT_PROMPT</textarea>
                 <div class="flex items-center justify-between text-xs text-slate-400 px-1 pt-1">
                     <span id="char-count">0 characters | 0 words</span>
-                    <button id="clear-text-btn" class="text-slate-400 hover:text-slate-600 transition">Clear text</button>
+                    <button type="button" id="btn-clear-text" class="text-slate-400 hover:text-slate-600 transition">Clear text</button>
                 </div>
             </div>
 
-            <!-- Normalization & Speech Prep Control Bar -->
-            <div class="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2.5">
-                <div class="flex items-center gap-2 flex-wrap">
-                    <span class="text-xs font-semibold text-slate-600 flex items-center gap-1">
-                        <span>🪄</span> <span>Text Prep:</span>
-                    </span>
-                    <select id="norm-mode-select" class="text-xs bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1 text-slate-700 outline-none focus:ring-1 focus:ring-blue-500 font-medium">
-                        <option value="auto">🤖 Auto-Detect (Hindi / English)</option>
-                        <option value="hindi">🇮🇳 Pure Hindi (Devanagari)</option>
-                        <option value="hinglish">🇮🇳 Hinglish (Bilingual)</option>
-                        <option value="english">🇬🇧 English</option>
-                        <option value="off">🚫 Raw (No Normalization)</option>
-                    </select>
-                    <button type="button" id="btn-normalize-preview" class="text-xs inline-flex items-center gap-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-3 py-1 rounded-lg font-medium transition shadow-xs">
-                        <span>Preview Spoken Form</span>
-                    </button>
-                </div>
-                <div class="flex items-center gap-2">
-                    <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs text-slate-600 select-none">
-                        <input type="checkbox" id="auto-normalize-checkbox" checked class="rounded text-blue-600 focus:ring-blue-500 h-3.5 w-3.5">
-                        <span>Auto-prepare on Generate</span>
-                    </label>
-                </div>
-            </div>
-
-            <!-- Inline Expandable Normalization Preview Card -->
-            <div id="norm-preview-card" class="hidden bg-indigo-50/70 border border-indigo-200 rounded-xl p-3.5 space-y-2.5 transition">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <span class="text-sm">📝</span>
-                        <div>
-                            <span class="text-xs font-semibold text-indigo-950">Spoken Form Preview</span>
-                            <span class="text-[11px] text-indigo-700 ml-1.5 font-normal">(Numbers & abbreviations converted to phonetic words)</span>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-1.5">
-                        <button type="button" id="btn-apply-norm" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-2.5 py-1 rounded-lg transition shadow-sm">
-                            ✅ Apply to Input Box
-                        </button>
-                        <button type="button" id="btn-close-norm" class="text-xs text-slate-400 hover:text-slate-600 px-1.5 py-1">
-                            ✕
-                        </button>
-                    </div>
-                </div>
-                <div id="norm-preview-text" class="text-sm text-slate-800 bg-white p-2.5 rounded-lg border border-indigo-100 font-normal leading-relaxed whitespace-pre-wrap"></div>
-                <div id="norm-changes-tags" class="flex flex-wrap items-center gap-1.5 pt-0.5"></div>
-            </div>
-        </div>
-
-        <!-- Voice Selection Section -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-4">
-            <div class="flex items-center justify-between">
-                <label class="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
-                    <span>2. Select Voice & Acoustic Model</span>
-                </label>
-                <span id="selected-voice-badge" class="text-xs bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-0.5 rounded-full font-medium">
-                    Voice: Default
+            <!-- Optional Advanced Spoken Preview Toggle -->
+            <div class="pt-1 flex items-center justify-between text-xs text-slate-500">
+                <span class="flex items-center gap-1 text-[11px] text-slate-400">
+                    <span class="material-symbols-outlined text-sm text-blue-500">auto_awesome</span>
+                    <span>Phonetic loanword & number expansion enabled automatically</span>
                 </span>
-            </div>
-
-            <!-- Voice Tabs -->
-            <div class="grid grid-cols-3 gap-2 p-1 bg-slate-100 rounded-xl text-xs sm:text-sm font-medium">
-                <button type="button" class="tab-btn active py-2 px-3 rounded-lg text-center transition" data-tab="presets">
-                    🎙️ Preset Voices
-                </button>
-                <button type="button" class="tab-btn py-2 px-3 rounded-lg text-center transition" data-tab="upload">
-                    📁 Clone Audio File
-                </button>
-                <button type="button" class="tab-btn py-2 px-3 rounded-lg text-center transition" data-tab="url">
-                    🔗 Custom URL
+                <button type="button" id="btn-toggle-spoken-preview" class="text-blue-600 hover:text-blue-800 underline font-medium">
+                    Preview Spoken Words
                 </button>
             </div>
 
-            <!-- Tab 1: Preset Voices Content -->
-            <div id="tab-presets-content" class="space-y-3.5">
-                <!-- Filters -->
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">
-                    <div class="flex items-center gap-1.5 flex-wrap" id="lang-filter-container">
-                        <button type="button" class="filter-chip active text-xs border border-slate-300 rounded-full px-2.5 py-1 font-medium transition" data-lang="all">
-                            All Voices (27)
-                        </button>
-                        <button type="button" class="filter-chip text-xs border border-slate-300 bg-white rounded-full px-2.5 py-1 font-medium transition" data-lang="popular">
-                            🌟 Popular
-                        </button>
-                        <button type="button" class="filter-chip text-xs border border-slate-300 bg-white rounded-full px-2.5 py-1 font-medium transition" data-lang="hi">
-                            🇮🇳 Hindi / Hinglish
-                        </button>
-                        <button type="button" class="filter-chip text-xs border border-slate-300 bg-white rounded-full px-2.5 py-1 font-medium transition" data-lang="en">
-                            🇬🇧 English
-                        </button>
-                        <button type="button" class="filter-chip text-xs border border-slate-300 bg-white rounded-full px-2.5 py-1 font-medium transition" data-lang="other">
-                            🌍 European
-                        </button>
-                    </div>
-
-                    <div class="relative w-full sm:w-48">
-                        <input
-                            type="text"
-                            id="voice-search"
-                            placeholder="Search voices..."
-                            class="w-full text-xs border border-slate-300 rounded-lg pl-2.5 pr-2 py-1.5 focus:ring-1 focus:ring-blue-500 outline-none"
-                        />
-                    </div>
+            <!-- Hidden Inline Preview Box -->
+            <div id="spoken-preview-box" class="hidden bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2">
+                <div class="flex items-center justify-between text-xs font-semibold text-slate-700">
+                    <span>Clean Spoken Form (Sent to Audio Engine):</span>
+                    <button type="button" id="btn-close-spoken-preview" class="text-slate-400 hover:text-slate-600">✕</button>
                 </div>
+                <div id="spoken-preview-text" class="text-xs text-slate-800 bg-white p-2.5 rounded-lg border border-slate-200 leading-relaxed font-mono"></div>
+                <div id="spoken-preview-changes" class="flex flex-wrap gap-1"></div>
+            </div>
+        </section>
 
-                <!-- Voice Cards Grid -->
-                <div id="voice-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 max-h-72 overflow-y-auto pr-1">
-                    <!-- Populated by JavaScript -->
+        <!-- ============================================================ -->
+        <!-- STEP 3: GENERATE & MASTERED SPEECH -->
+        <!-- ============================================================ -->
+        <section class="step-card p-4 sm:p-6 space-y-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
+                        <span class="text-blue-600 material-symbols-outlined">graphic_eq</span>
+                        <span>Step 3: Generate Mastered Speech</span>
+                    </h2>
                 </div>
             </div>
 
-            <!-- Tab 2: Clone from Upload Content -->
-            <div id="tab-upload-content" class="hidden space-y-3 pt-1">
-                <div id="drop-zone" class="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:border-blue-500 bg-slate-50 transition cursor-pointer">
-                    <input
-                        type="file"
-                        id="voice-wav-input"
-                        class="hidden"
-                        accept=".wav,.mp3,.flac,.ogg,.m4a,.safetensors,audio/*"
-                    />
-                    <div class="space-y-1.5">
-                        <div class="text-3xl">🎙️</div>
-                        <p class="text-sm font-medium text-slate-700">Click or Drag & Drop audio or .safetensors Persona</p>
-                        <p class="text-xs text-slate-400">Supports WAV, MP3, FLAC, or precomputed .safetensors Personas (5–10s recommended)</p>
+            <!-- Primary Generate Action Button -->
+            <md-filled-button id="btn-generate-speech" class="w-full py-2">
+                <span class="material-symbols-outlined" slot="icon">bolt</span>
+                <span id="generate-btn-label" class="text-sm sm:text-base font-semibold">Generate Speech</span>
+            </md-filled-button>
+
+            <!-- Progress Bar during streaming generation -->
+            <div id="generate-progress-container" class="hidden space-y-2">
+                <md-linear-progress indeterminate></md-linear-progress>
+                <div class="flex items-center justify-between text-xs text-slate-500">
+                    <span id="generate-status-text">Synthesizing audio frames...</span>
+                    <span id="generate-time-text">0.0s</span>
+                </div>
+            </div>
+
+            <!-- Master Player & Actions Box -->
+            <div id="player-container" class="hidden bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-3.5">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2 text-xs font-semibold text-slate-800">
+                        <span class="material-symbols-outlined text-emerald-600">check_circle</span>
+                        <span>Generation Complete</span>
+                    </div>
+                    <!-- Speed Selector -->
+                    <div class="flex items-center gap-1.5 text-xs text-slate-600">
+                        <span>Speed:</span>
+                        <select id="playback-speed-select" class="bg-white border border-slate-300 rounded-lg px-2 py-0.5 text-xs outline-none">
+                            <option value="0.8">0.8x</option>
+                            <option value="1.0" selected>1.0x</option>
+                            <option value="1.2">1.2x</option>
+                            <option value="1.5">1.5x</option>
+                        </select>
                     </div>
                 </div>
 
-                <!-- Persona Export Card -->
-                <div id="persona-export-box" class="bg-emerald-50/70 border border-emerald-200 rounded-xl p-3.5 space-y-2">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <span class="text-base">💾</span>
-                            <div>
-                                <h4 class="text-xs font-semibold text-emerald-950">Save Persona for Repeat Use</h4>
-                                <p class="text-[11px] text-emerald-800">Export precomputed KV state to .safetensors. Loads instantly with 0ms encoding latency!</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-2 pt-1">
-                        <input
-                            type="text"
-                            id="persona-name-input"
-                            placeholder="Persona name (e.g. my_custom_voice)"
-                            class="flex-1 text-xs border border-emerald-300 rounded-lg px-2.5 py-1.5 outline-none focus:ring-1 focus:ring-emerald-500 bg-white"
-                        />
-                        <button
-                            type="button"
-                            id="btn-export-persona"
-                            class="text-xs inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-3.5 py-1.5 rounded-lg transition shadow-sm"
-                        >
-                            <span>Download .safetensors</span>
-                        </button>
-                    </div>
-                </div>
+                <!-- Native Audio Player -->
+                <audio id="output-audio-player" controls class="w-full h-10"></audio>
 
-                <!-- Uploaded Audio Preview -->
-                <div id="upload-preview" class="hidden bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center justify-between gap-3">
-                    <div class="flex items-center gap-2.5 min-w-0">
-                        <span class="text-blue-600 text-lg">🎵</span>
-                        <div class="min-w-0">
-                            <p id="upload-filename" class="text-xs font-semibold text-slate-800 truncate">audio.wav</p>
-                            <p id="upload-filesize" class="text-xs text-slate-400">0 KB</p>
-                        </div>
-                    </div>
+                <!-- Export & Save Actions -->
+                <div class="flex flex-wrap items-center justify-between gap-2.5 pt-1 border-t border-slate-200">
                     <div class="flex items-center gap-2">
-                        <audio id="preview-audio" controls class="h-8 max-w-[200px]"></audio>
-                        <button id="remove-upload-btn" class="text-xs text-red-500 hover:text-red-700 px-2 py-1 font-medium">
-                            Remove
-                        </button>
+                        <md-filled-tonal-button id="btn-download-wav">
+                            <span class="material-symbols-outlined" slot="icon">download</span>
+                            Download Audio (.wav)
+                        </md-filled-tonal-button>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <md-outlined-button id="btn-download-safetensors">
+                            <span class="material-symbols-outlined" slot="icon">save</span>
+                            Export Persona (.safetensors)
+                        </md-outlined-button>
                     </div>
                 </div>
             </div>
+        </section>
 
-            <!-- Tab 3: Custom URL Content -->
-            <div id="tab-url-content" class="hidden space-y-2 pt-1">
-                <input
-                    type="text"
-                    id="voice-url-input"
-                    class="w-full border border-slate-300 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                    placeholder="e.g. hf://kyutai/tts-voices/alba-mackenna/casual.wav or https://..."
-                />
-                <p class="text-xs text-slate-500">
-                    Supports <code>hf://</code>, <code>https://</code>, or <code>http://</code> URLs pointing to 24 kHz WAV/MP3 files.
-                </p>
-            </div>
-        </div>
-
-        <!-- Action Button & Status -->
-        <div class="space-y-3">
-            <button
-                id="generate-btn"
-                class="w-full py-3.5 px-6 rounded-xl text-white font-semibold text-base bg-blue-600 hover:bg-blue-700 active:bg-blue-800 shadow-sm transition disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-                <span id="generate-icon">⚡</span>
-                <span id="generate-text">Generate Speech</span>
-            </button>
-
-            <!-- Status Indicator -->
-            <div id="status" class="hidden p-3.5 bg-slate-100 border border-slate-200 rounded-xl">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-2.5">
-                        <div id="status-spinner" class="spinner w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
-                        <span id="status-text" class="text-xs sm:text-sm font-medium text-slate-700">Generating speech...</span>
-                    </div>
-                    <span id="status-time" class="text-xs text-slate-400 font-mono"></span>
-                </div>
+        <!-- ============================================================ -->
+        <!-- RECENT GENERATIONS TRAY (INDEXEDDB PERSISTENCE) -->
+        <!-- ============================================================ -->
+        <section class="step-card p-4 sm:p-6 space-y-3">
+            <div class="flex items-center justify-between">
+                <h3 class="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-slate-500">history</span>
+                    <span>Recent Generations (Saved in Browser)</span>
+                </h3>
+                <button type="button" id="btn-clear-history" class="text-xs text-slate-400 hover:text-red-500 transition">Clear History</button>
             </div>
 
-            <!-- Audio Output Section -->
-            <div id="audio-section" class="hidden bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-3">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-sm font-semibold text-slate-800 flex items-center gap-2">
-                        <span>🔊 Generated Audio</span>
-                        <span id="speed-badge" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-                            1.2x Real-Time
-                        </span>
-                    </h3>
-                    <a
-                        id="download-link"
-                        class="inline-flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg border border-blue-200 transition"
-                    >
-                        <span>⬇️ Download WAV</span>
-                    </a>
-                </div>
-
-                <audio id="audio" controls class="w-full rounded-lg"></audio>
-
-                <div id="perf-metrics" class="text-xs text-slate-500 flex items-center justify-between border-t border-slate-100 pt-2 font-mono">
-                    <span id="metric-first-audio">First Audio: --</span>
-                    <span id="metric-total-time">Total Time: --</span>
-                    <span id="metric-duration">Audio Duration: --</span>
+            <div id="history-container" class="space-y-2">
+                <p id="history-empty-msg" class="text-xs text-slate-400 py-3 text-center italic">No recent generations yet. Generate speech above to build your creator library!</p>
+                <div id="history-list" class="space-y-2">
+                    <!-- Populated dynamically via IndexedDB -->
                 </div>
             </div>
-        </div>
+        </section>
+
     </div>
 
+    <!-- Hidden audio element for Preset Auditioning -->
+    <audio id="audition-audio-player" class="hidden"></audio>
+
+    <!-- Client-Side Architecture Script -->
     <script>
-        // Catalog of predefined voices with metadata
-        const VOICES = [
-            { id: "pooja", name: "Pooja (Hindi)", lang: "hi", flag: "🇮🇳", gender: "Female", desc: "Crisp & natural Hindi female narration", popular: true },
-            { id: "priya", name: "Priya (Hindi)", lang: "hi", flag: "🇮🇳", gender: "Female", desc: "Warm & gentle Hindi female voice", popular: true },
-            { id: "neha", name: "Neha (Hindi)", lang: "hi", flag: "🇮🇳", gender: "Female", desc: "Energetic & clear Hindi female voice", popular: true },
-            { id: "kabir", name: "Kabir (Hindi)", lang: "hi", flag: "🇮🇳", gender: "Male", desc: "Deep & articulate Hindi male voice", popular: true },
-            { id: "rohan", name: "Rohan (Hinglish)", lang: "hi", flag: "🇮🇳", gender: "Male", desc: "Modern bilingual Hinglish & English", popular: true },
-            { id: "aarav", name: "Aarav (Indian English)", lang: "hi", flag: "🇮🇳", gender: "Male", desc: "Crisp Indian English male diction", popular: true },
-            { id: "dev", name: "Dev (Hindi)", lang: "hi", flag: "🇮🇳", gender: "Male", desc: "Classic Hindi male storytelling", popular: false },
-            { id: "alba", name: "Alba", lang: "en", flag: "🇬🇧", gender: "Female", desc: "Warm, natural & casual (Default)", popular: true },
-            { id: "marius", name: "Marius", lang: "en", flag: "🇬🇧", gender: "Male", desc: "Friendly, deep & resonant", popular: true },
-            { id: "jean", name: "Jean", lang: "en", flag: "🇬🇧", gender: "Male", desc: "Clear narration & audiobook", popular: true },
-            { id: "cosette", name: "Cosette", lang: "en", flag: "🇬🇧", gender: "Female", desc: "Soft & conversational", popular: true },
-            { id: "javert", name: "Javert", lang: "en", flag: "🇬🇧", gender: "Male", desc: "Authoritative & strong", popular: true },
-            { id: "anna", name: "Anna", lang: "en", flag: "🇬🇧", gender: "Female", desc: "Articulate & clear", popular: false },
-            { id: "eponine", name: "Eponine", lang: "en", flag: "🇬🇧", gender: "Female", desc: "Casual & expressive", popular: false },
-            { id: "george", name: "George", lang: "en", flag: "🇬🇧", gender: "Male", desc: "Warm British accent", popular: false },
-            { id: "jane", name: "Jane", lang: "en", flag: "🇬🇧", gender: "Female", desc: "Professional & articulate", popular: false },
-            { id: "lola", name: "Lola", lang: "es", flag: "🇪🇸", gender: "Female", desc: "Spanish, vibrant & lively", popular: true },
-            { id: "giovanni", name: "Giovanni", lang: "it", flag: "🇮🇹", gender: "Male", desc: "Italian, expressive & warm", popular: true },
-            { id: "estelle", name: "Estelle", lang: "fr", flag: "🇫🇷", gender: "Female", desc: "French, gentle & elegant", popular: true },
-            { id: "juergen", name: "Jürgen", lang: "de", flag: "🇩🇪", gender: "Male", desc: "German, clear & structured", popular: false },
-            { id: "rafael", name: "Rafael", lang: "pt", flag: "🇵🇹", gender: "Male", desc: "Portuguese, smooth & warm", popular: false },
-            { id: "daan", name: "Daan", lang: "nl", flag: "🇳🇱", gender: "Male", desc: "Dutch, natural & direct", popular: false },
-            { id: "paul", name: "Paul", lang: "en", flag: "🇬🇧", gender: "Male", desc: "Professional narration", popular: false },
-            { id: "vera", name: "Vera", lang: "en", flag: "🇬🇧", gender: "Female", desc: "Crisp & articulate", popular: false },
-            { id: "michael", name: "Michael", lang: "en", flag: "🇬🇧", gender: "Male", desc: "Conversational & relaxed", popular: false },
-            { id: "fantine", name: "Fantine", lang: "en", flag: "🇬🇧", gender: "Female", desc: "Expressive & gentle", popular: false },
-            { id: "mary", name: "Mary", lang: "en", flag: "🇬🇧", gender: "Female", desc: "Soft storytelling", popular: false },
-            { id: "charles", name: "Charles", lang: "en", flag: "🇬🇧", gender: "Male", desc: "Classic storyteller", popular: false },
-            { id: "stuart_bell", name: "Stuart", lang: "en", flag: "🇬🇧", gender: "Male", desc: "Conversational & steady", popular: false },
-            { id: "caro_davy", name: "Caro", lang: "en", flag: "🇬🇧", gender: "Female", desc: "Dynamic & cheerful", popular: false },
-            { id: "bill_boerst", name: "Bill", lang: "en", flag: "🇬🇧", gender: "Male", desc: "Deep & calm tone", popular: false },
-            { id: "peter_yearsley", name: "Peter", lang: "en", flag: "🇬🇧", gender: "Male", desc: "Classic narrator", popular: false },
-            { id: "azelma", name: "Azelma", lang: "en", flag: "🇬🇧", gender: "Female", desc: "Soft spoken", popular: false },
-            { id: "eve", name: "Eve", lang: "en", flag: "🇬🇧", gender: "Female", desc: "Clear & friendly", popular: false },
+        // Preset Voices Catalog
+        const PRESET_VOICES = [
+            { id: "rohan", name: "Rohan", lang: "hi", flag: "🇮🇳", gender: "Male", desc: "Casual Hinglish creator voice (Recommended)", popular: true },
+            { id: "pooja", name: "Pooja", lang: "hi", flag: "🇮🇳", gender: "Female", desc: "Crisp & natural Hindi female narration", popular: true },
+            { id: "priya", name: "Priya", lang: "hi", flag: "🇮🇳", gender: "Female", desc: "Warm & expressive Hindi female storytelling", popular: true },
+            { id: "kabir", name: "Kabir", lang: "hi", flag: "🇮🇳", gender: "Male", desc: "Deep & authoritative Hindi male narration", popular: true },
+            { id: "dev", name: "Dev", lang: "hi", flag: "🇮🇳", gender: "Male", desc: "Conversational Hindi male voice", popular: true },
+            { id: "neha", name: "Neha", lang: "hi", flag: "🇮🇳", gender: "Female", desc: "Upbeat & friendly Hindi female voice", popular: false },
+            { id: "aarav", name: "Aarav", lang: "en", flag: "🇮🇳", gender: "Male", desc: "Indian English conversational male voice", popular: false },
+            { id: "alba", name: "Alba", lang: "en", flag: "🇬🇧", gender: "Female", desc: "British English casual female voice", popular: false },
+            { id: "marius", name: "Marius", lang: "en", flag: "🇬🇧", gender: "Male", desc: "Natural English storytelling male voice", popular: false },
+            { id: "cosette", name: "Cosette", lang: "en", flag: "🇬🇧", gender: "Female", desc: "Expressive English female voice", popular: false },
         ];
 
-        // State
-        let selectedVoice = ""; // empty = model default
-        let activeTab = "presets";
-        let activeLangFilter = "all";
-        let streamingPlayer = null;
-        let currentAudioBlob = null;
-        let currentNormalizedText = "";
+        // State Machine
+        const state = {
+            activeVoiceType: "preset", // "preset", "recorded", "uploaded"
+            selectedPresetId: "rohan",
+            recordedWavBlob: null,
+            recordedVoiceName: "My Voice",
+            uploadedFile: null,
+            audioContext: null,
+            mediaStream: null,
+            scriptProcessor: null,
+            pcmChunks: [],
+            isRecording: false,
+            recordTimerId: null,
+            recordSeconds: 0,
+            currentAuditioningId: null,
+            lastGeneratedBlob: null
+        };
 
-        // DOM elements
-        const textInput = document.getElementById('text-input');
-        const charCount = document.getElementById('char-count');
-        const clearTextBtn = document.getElementById('clear-text-btn');
-        const voiceGrid = document.getElementById('voice-grid');
-        const voiceSearch = document.getElementById('voice-search');
-        const selectedVoiceBadge = document.getElementById('selected-voice-badge');
-        const voiceUrlInput = document.getElementById('voice-url-input');
-        const voiceWavInput = document.getElementById('voice-wav-input');
-        const dropZone = document.getElementById('drop-zone');
-        const uploadPreview = document.getElementById('upload-preview');
-        const uploadFilename = document.getElementById('upload-filename');
-        const uploadFilesize = document.getElementById('upload-filesize');
-        const previewAudio = document.getElementById('preview-audio');
-        const removeUploadBtn = document.getElementById('remove-upload-btn');
-        const generateBtn = document.getElementById('generate-btn');
-        const generateText = document.getElementById('generate-text');
-        const generateIcon = document.getElementById('generate-icon');
-        const statusEl = document.getElementById('status');
-        const statusText = document.getElementById('status-text');
-        const statusSpinner = document.getElementById('status-spinner');
-        const audioSection = document.getElementById('audio-section');
-        const audio = document.getElementById('audio');
-        const downloadLink = document.getElementById('download-link');
-        const speedBadge = document.getElementById('speed-badge');
-        const metricFirstAudio = document.getElementById('metric-first-audio');
-        const metricTotalTime = document.getElementById('metric-total-time');
-        const metricDuration = document.getElementById('metric-duration');
-        const toggleTipBtn = document.getElementById('toggle-tip-btn');
-        const tipDetails = document.getElementById('tip-details');
+        // ============================================================
+        // 1. INDEXEDDB STORAGE CLIENT (PERSISTENCE)
+        // ============================================================
+        const DB_NAME = "TaqnikVoiceStudioDB";
+        const DB_VERSION = 1;
 
-        // Toggle tip accordion
-        toggleTipBtn.addEventListener('click', () => {
-            tipDetails.classList.toggle('hidden');
-            toggleTipBtn.textContent = tipDetails.classList.contains('hidden') ? 'Learn why' : 'Hide details';
-        });
-
-        // Live text counter
-        function updateCounter() {
-            const val = textInput.value;
-            const words = val.trim() ? val.trim().split(/\s+/).length : 0;
-            charCount.textContent = `${val.length} characters | ${words} words`;
+        function openDatabase() {
+            return new Promise((resolve, reject) => {
+                const req = indexedDB.open(DB_NAME, DB_VERSION);
+                req.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains("voices")) {
+                        db.createObjectStore("voices", { keyPath: "id" });
+                    }
+                    if (!db.objectStoreNames.contains("history")) {
+                        db.createObjectStore("history", { keyPath: "id" });
+                    }
+                };
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
         }
-        textInput.addEventListener('input', updateCounter);
-        updateCounter();
 
-        // Clear text
-        clearTextBtn.addEventListener('click', () => {
-            textInput.value = "";
-            textInput.focus();
-            updateCounter();
-        });
-
-        // Quick prompt pills
-        document.querySelectorAll('.sample-pill').forEach(btn => {
-            btn.addEventListener('click', () => {
-                textInput.value = btn.getAttribute('data-text');
-                updateCounter();
-                textInput.focus();
-            });
-        });
-
-        // Tabs switching
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                activeTab = btn.getAttribute('data-tab');
-
-                document.getElementById('tab-presets-content').classList.toggle('hidden', activeTab !== 'presets');
-                document.getElementById('tab-upload-content').classList.toggle('hidden', activeTab !== 'upload');
-                document.getElementById('tab-url-content').classList.toggle('hidden', activeTab !== 'url');
-
-                updateSelectedVoiceBadge();
-            });
-        });
-
-        // Render voice cards
-        function renderVoiceGrid() {
-            voiceGrid.innerHTML = "";
-            const search = voiceSearch.value.toLowerCase().trim();
-
-            // Default Option Card
-            if (!search || "default".includes(search)) {
-                const defaultCard = document.createElement('div');
-                defaultCard.className = `voice-card p-3 rounded-xl border border-slate-200 cursor-pointer text-left flex items-center justify-between ${selectedVoice === "" ? "selected" : "bg-white"}`;
-                defaultCard.innerHTML = `
-                    <div class="flex items-center gap-2.5">
-                        <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-sm font-semibold text-slate-700">✨</div>
-                        <div>
-                            <div class="flex items-center gap-1.5">
-                                <span class="font-semibold text-xs text-slate-900">Model Default</span>
-                            </div>
-                            <p class="text-[11px] text-slate-400">Native language voice</p>
-                        </div>
-                    </div>
-                    ${selectedVoice === "" ? `<span class="text-blue-600 text-sm">✓</span>` : ""}
-                `;
-                defaultCard.addEventListener('click', () => {
-                    selectedVoice = "";
-                    renderVoiceGrid();
-                    updateSelectedVoiceBadge();
+        async function dbSaveVoice(id, name, blob, type) {
+            const db = await openDatabase();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction("voices", "readwrite");
+                tx.objectStore("voices").put({
+                    id: id || "voice_" + Date.now(),
+                    name: name || "Custom Voice",
+                    blob: blob,
+                    type: type || "recorded",
+                    createdAt: Date.now()
                 });
-                voiceGrid.appendChild(defaultCard);
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => reject(tx.error);
+            });
+        }
+
+        async function dbGetAllVoices() {
+            const db = await openDatabase();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction("voices", "readonly");
+                const req = tx.objectStore("voices").getAll();
+                req.onsuccess = () => resolve(req.result || []);
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        async function dbDeleteVoice(id) {
+            const db = await openDatabase();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction("voices", "readwrite");
+                tx.objectStore("voices").delete(id);
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => reject(tx.error);
+            });
+        }
+
+        async function dbSaveHistory(text, voiceName, audioBlob) {
+            const db = await openDatabase();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction("history", "readwrite");
+                tx.objectStore("history").put({
+                    id: "gen_" + Date.now(),
+                    text: text,
+                    voiceName: voiceName,
+                    audioBlob: audioBlob,
+                    createdAt: Date.now()
+                });
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => reject(tx.error);
+            });
+        }
+
+        async function dbGetAllHistory() {
+            const db = await openDatabase();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction("history", "readonly");
+                const req = tx.objectStore("history").getAll();
+                req.onsuccess = () => resolve(req.result || []);
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        async function dbClearHistory() {
+            const db = await openDatabase();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction("history", "readwrite");
+                tx.objectStore("history").clear();
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => reject(tx.error);
+            });
+        }
+
+        // ============================================================
+        // 2. IN-BROWSER 16-BIT 24kHz PCM WAV ENCODER
+        // ============================================================
+        function encodeWAV(samples, sampleRate) {
+            const numChannels = 1;
+            const bitDepth = 16;
+            const bytesPerSample = bitDepth / 8;
+            const blockAlign = numChannels * bytesPerSample;
+            const dataSize = samples.length * bytesPerSample;
+            const buffer = new ArrayBuffer(44 + dataSize);
+            const view = new DataView(buffer);
+
+            function writeString(offset, str) {
+                for (let i = 0; i < str.length; i++) {
+                    view.setUint8(offset + i, str.charCodeAt(i));
+                }
             }
 
-            // Filter voices
-            const filtered = VOICES.filter(v => {
-                if (activeLangFilter === "popular" && !v.popular) return false;
-                if (activeLangFilter === "hi" && v.lang !== "hi") return false;
-                if (activeLangFilter === "en" && v.lang !== "en") return false;
-                if (activeLangFilter === "other" && (v.lang === "en" || v.lang === "hi")) return false;
-                if (search && !v.name.toLowerCase().includes(search) && !v.desc.toLowerCase().includes(search)) return false;
-                return true;
+            writeString(0, 'RIFF');
+            view.setUint32(4, 36 + dataSize, true);
+            writeString(8, 'WAVE');
+            writeString(12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true); // PCM
+            view.setUint16(22, numChannels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * blockAlign, true);
+            view.setUint16(32, blockAlign, true);
+            view.setUint16(34, bitDepth, true);
+            writeString(36, 'data');
+            view.setUint32(40, dataSize, true);
+
+            let offset = 44;
+            for (let i = 0; i < samples.length; i++, offset += 2) {
+                let s = Math.max(-1, Math.min(1, samples[i]));
+                view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+            }
+
+            return new Blob([view], { type: 'audio/wav' });
+        }
+
+        // Resample Float32Array to 24000 Hz if needed
+        function resampleTo24k(audioData, origSampleRate) {
+            const targetSampleRate = 24000;
+            if (origSampleRate === targetSampleRate) return audioData;
+            const ratio = origSampleRate / targetSampleRate;
+            const newLength = Math.round(audioData.length / ratio);
+            const result = new Float32Array(newLength);
+            for (let i = 0; i < newLength; i++) {
+                const origIndex = i * ratio;
+                const index = Math.floor(origIndex);
+                const frac = origIndex - index;
+                const nextIndex = Math.min(index + 1, audioData.length - 1);
+                result[i] = audioData[index] * (1 - frac) + audioData[nextIndex] * frac;
+            }
+            return result;
+        }
+
+        // ============================================================
+        // 3. MICROPHONE RECORDING CONTROLLER
+        // ============================================================
+        const btnStartRecord = document.getElementById("btn-start-record");
+        const btnStopRecord = document.getElementById("btn-stop-record");
+        const recordBtnLabel = document.getElementById("record-btn-label");
+        const recordTimer = document.getElementById("record-timer");
+        const recordProgress = document.getElementById("record-progress");
+        const recordedPreviewBox = document.getElementById("recorded-preview-box");
+        const recordedAudio = document.getElementById("recorded-audio");
+        const meterCanvas = document.getElementById("meter-canvas");
+        const voiceSaveName = document.getElementById("voice-save-name");
+        const btnSaveVoice = document.getElementById("btn-save-voice");
+
+        async function startRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+                state.mediaStream = stream;
+                state.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const source = state.audioContext.createMediaStreamSource(stream);
+
+                // ScriptProcessor to capture raw PCM Float32 samples
+                const bufferSize = 4096;
+                state.scriptProcessor = state.audioContext.createScriptProcessor(bufferSize, 1, 1);
+                state.pcmChunks = [];
+
+                state.scriptProcessor.onaudioprocess = (e) => {
+                    if (!state.isRecording) return;
+                    const input = e.inputBuffer.getChannelData(0);
+                    state.pcmChunks.push(new Float32Array(input));
+                };
+
+                source.connect(state.scriptProcessor);
+                state.scriptProcessor.connect(state.audioContext.destination);
+
+                state.isRecording = true;
+                state.recordSeconds = 0;
+
+                btnStartRecord.classList.add("hidden");
+                btnStopRecord.classList.remove("hidden");
+                btnStopRecord.classList.add("recording-pulse");
+                meterCanvas.classList.remove("hidden");
+                recordedPreviewBox.classList.add("hidden");
+
+                state.recordTimerId = setInterval(() => {
+                    state.recordSeconds++;
+                    const sec = Math.min(state.recordSeconds, 10);
+                    recordTimer.textContent = `00:0${sec} / 00:10`;
+                    recordProgress.value = sec / 10;
+                    if (state.recordSeconds >= 10) {
+                        stopRecording();
+                    }
+                }, 1000);
+
+            } catch (err) {
+                console.error("Mic access denied:", err);
+                alert("Microphone access is required to record your voice. Please grant microphone permission in your browser.");
+            }
+        }
+
+        function stopRecording() {
+            if (!state.isRecording) return;
+            state.isRecording = false;
+            clearInterval(state.recordTimerId);
+
+            btnStopRecord.classList.remove("recording-pulse");
+            btnStopRecord.classList.add("hidden");
+            btnStartRecord.classList.remove("hidden");
+            recordBtnLabel.textContent = "Re-record Voice";
+
+            if (state.mediaStream) {
+                state.mediaStream.getTracks().forEach(t => t.stop());
+            }
+
+            // Flatten chunks
+            let totalLength = 0;
+            for (const chunk of state.pcmChunks) {
+                totalLength += chunk.length;
+            }
+            const fullBuffer = new Float32Array(totalLength);
+            let offset = 0;
+            for (const chunk of state.pcmChunks) {
+                fullBuffer.set(chunk, offset);
+                offset += chunk.length;
+            }
+
+            // Resample to 24000 Hz and encode 16-bit PCM WAV
+            const resampled = resampleTo24k(fullBuffer, state.audioContext.sampleRate);
+            const wavBlob = encodeWAV(resampled, 24000);
+
+            state.recordedWavBlob = wavBlob;
+            state.activeVoiceType = "recorded";
+            recordedAudio.src = URL.createObjectURL(wavBlob);
+            recordedPreviewBox.classList.remove("hidden");
+
+            updateActiveVoiceBadge("My Voice (Recorded)");
+        }
+
+        btnStartRecord.addEventListener("click", startRecording);
+        btnStopRecord.addEventListener("click", stopRecording);
+
+        btnSaveVoice.addEventListener("click", async () => {
+            if (!state.recordedWavBlob) return;
+            const name = voiceSaveName.value.trim() || "My Voice (" + new Date().toLocaleDateString() + ")";
+            await dbSaveVoice(null, name, state.recordedWavBlob, "recorded");
+            alert(`Voice "${name}" saved to your browser storage!`);
+            loadSavedVoicesUI();
+        });
+
+        // ============================================================
+        // 4. PRESETS RENDERING & INSTANT AUDITIONING
+        // ============================================================
+        const presetsGrid = document.getElementById("presets-grid");
+        const auditionPlayer = document.getElementById("audition-audio-player");
+
+        function renderPresets(filter = "all", search = "") {
+            presetsGrid.innerHTML = "";
+            const filtered = PRESET_VOICES.filter(v => {
+                const matchFilter = filter === "all" || (filter === "hi" && v.lang === "hi") || (filter === "en" && v.lang === "en") || (filter === "other" && v.lang !== "hi" && v.lang !== "en");
+                const matchSearch = !search || v.name.toLowerCase().includes(search.toLowerCase()) || v.desc.toLowerCase().includes(search.toLowerCase());
+                return matchFilter && matchSearch;
             });
 
-            filtered.forEach(v => {
-                const card = document.createElement('div');
-                const isSelected = selectedVoice === v.id;
-                card.className = `voice-card p-3 rounded-xl border border-slate-200 cursor-pointer text-left flex items-center justify-between ${isSelected ? "selected" : "bg-white"}`;
+            filtered.forEach(voice => {
+                const isSelected = state.activeVoiceType === "preset" && state.selectedPresetId === voice.id;
+                const card = document.createElement("div");
+                card.className = `voice-card p-3 flex flex-col justify-between gap-2.5 ${isSelected ? 'selected' : ''}`;
+                card.dataset.id = voice.id;
+
                 card.innerHTML = `
-                    <div class="flex items-center gap-2.5 min-w-0">
-                        <div class="w-8 h-8 rounded-full ${v.gender === 'Female' ? 'bg-pink-100 text-pink-700' : 'bg-blue-100 text-blue-700'} flex items-center justify-center text-xs font-semibold flex-shrink-0">
-                            ${v.name[0]}
-                        </div>
-                        <div class="min-w-0">
-                            <div class="flex items-center gap-1.5">
-                                <span class="font-semibold text-xs text-slate-900 truncate">${v.name}</span>
-                                <span class="text-xs">${v.flag}</span>
-                                <span class="text-[10px] text-slate-400 border border-slate-200 px-1 rounded">${v.gender[0]}</span>
+                    <div class="flex items-start justify-between gap-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl">${voice.flag}</span>
+                            <div>
+                                <h4 class="text-sm font-bold text-slate-900">${voice.name}</h4>
+                                <span class="text-[10px] font-medium text-slate-500">${voice.gender} • ${voice.lang.toUpperCase()}</span>
                             </div>
-                            <p class="text-[11px] text-slate-400 truncate">${v.desc}</p>
                         </div>
+                        <button type="button" class="btn-audition text-xs inline-flex items-center gap-1 bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 px-2 py-1 rounded-lg border border-slate-200 transition" data-id="${voice.id}" title="Listen to voice sample">
+                            <span class="material-symbols-outlined text-sm">play_arrow</span>
+                            <span>Audition</span>
+                        </button>
                     </div>
-                    ${isSelected ? `<span class="text-blue-600 text-sm flex-shrink-0">✓</span>` : ""}
+                    <p class="text-xs text-slate-600 leading-snug line-clamp-2">${voice.desc}</p>
                 `;
-                card.addEventListener('click', () => {
-                    selectedVoice = v.id;
-                    renderVoiceGrid();
-                    updateSelectedVoiceBadge();
+
+                // Select card
+                card.addEventListener("click", (e) => {
+                    if (e.target.closest(".btn-audition")) return;
+                    selectPresetVoice(voice.id, voice.name);
                 });
-                voiceGrid.appendChild(card);
+
+                // Audition button
+                const btnAudition = card.querySelector(".btn-audition");
+                btnAudition.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    auditionVoice(voice.id, btnAudition);
+                });
+
+                presetsGrid.appendChild(card);
             });
         }
 
-        // Language filter chips
-        document.querySelectorAll('.filter-chip').forEach(chip => {
-            chip.addEventListener('click', () => {
-                document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-                chip.classList.add('active');
-                activeLangFilter = chip.getAttribute('data-lang');
-                renderVoiceGrid();
-            });
-        });
-
-        voiceSearch.addEventListener('input', renderVoiceGrid);
-        renderVoiceGrid();
-
-        function updateSelectedVoiceBadge() {
-            if (activeTab === "upload") {
-                const file = voiceWavInput.files[0];
-                selectedVoiceBadge.textContent = file ? `Clone: ${file.name}` : "Voice: Custom Upload (Select file)";
-            } else if (activeTab === "url") {
-                const url = voiceUrlInput.value.trim();
-                selectedVoiceBadge.textContent = url ? `URL: ${url.slice(0, 25)}...` : "Voice: Custom URL";
-            } else {
-                if (selectedVoice === "") {
-                    selectedVoiceBadge.textContent = "Voice: Model Default";
-                } else {
-                    const v = VOICES.find(x => x.id === selectedVoice);
-                    selectedVoiceBadge.textContent = `Voice: ${v ? v.name + " (" + v.gender + ")" : selectedVoice}`;
-                }
-            }
+        function selectPresetVoice(voiceId, voiceName) {
+            state.activeVoiceType = "preset";
+            state.selectedPresetId = voiceId;
+            document.querySelectorAll(".voice-card").forEach(c => c.classList.remove("selected"));
+            const card = document.querySelector(`.voice-card[data-id="${voiceId}"]`);
+            if (card) card.classList.add("selected");
+            updateActiveVoiceBadge(`${voiceName} (Preset)`);
         }
 
-        // File upload drag & drop
-        dropZone.addEventListener('click', () => voiceWavInput.click());
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.classList.add('border-blue-500', 'bg-blue-50');
-        });
-        dropZone.addEventListener('dragleave', () => {
-            dropZone.classList.remove('border-blue-500', 'bg-blue-50');
-        });
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('border-blue-500', 'bg-blue-50');
-            if (e.dataTransfer.files.length) {
-                voiceWavInput.files = e.dataTransfer.files;
-                handleFileUpload();
-            }
-        });
-        voiceWavInput.addEventListener('change', handleFileUpload);
+        function auditionVoice(voiceId, btnElem) {
+            const icon = btnElem.querySelector(".material-symbols-outlined");
+            const label = btnElem.querySelector("span:not(.material-symbols-outlined)");
 
-        function handleFileUpload() {
-            const file = voiceWavInput.files[0];
-            if (!file) return;
-
-            uploadFilesize.textContent = (file.size / 1024).toFixed(1) + " KB";
-            if (file.name.endsWith('.safetensors')) {
-                uploadFilename.textContent = `⚡ Precomputed Persona: ${file.name}`;
-                previewAudio.classList.add('hidden');
-            } else {
-                uploadFilename.textContent = file.name;
-                previewAudio.classList.remove('hidden');
-                previewAudio.src = URL.createObjectURL(file);
-            }
-
-            dropZone.classList.add('hidden');
-            uploadPreview.classList.remove('hidden');
-            updateSelectedVoiceBadge();
-        }
-
-        removeUploadBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            voiceWavInput.value = "";
-            previewAudio.src = "";
-            uploadPreview.classList.add('hidden');
-            dropZone.classList.remove('hidden');
-            updateSelectedVoiceBadge();
-        });
-
-        voiceUrlInput.addEventListener('input', updateSelectedVoiceBadge);
-
-        // Streaming WAV Player Implementation
-        class StreamingWavPlayer {
-            constructor() {
-                this.audioContext = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: "playback" });
-                this.sampleRate = 0;
-                this.numChannels = 0;
-                this.headerParsed = false;
-                this.headerBuffer = new Uint8Array(44);
-                this.headerBytesReceived = 0;
-                this.nextStartTime = 0;
-                this.isPlaying = false;
-                this.minBufferSize = 16384;
-                this.pcmData = new Uint8Array(0);
-                this.firstAudioPlayed = false;
-            }
-
-            parseWavHeader(header) {
-                const view = new DataView(header.buffer);
-                const riff = String.fromCharCode.apply(null, Array.from(header.slice(0, 4)));
-                const wave = String.fromCharCode.apply(null, Array.from(header.slice(8, 12)));
-                if (riff !== 'RIFF' || wave !== 'WAVE') throw new Error('Invalid WAV file');
-                this.numChannels = view.getUint16(22, true);
-                this.sampleRate = view.getUint32(24, true);
-                this.headerParsed = true;
-            }
-
-            appendPcmData(newData) {
-                const newBuffer = new Uint8Array(this.pcmData.length + newData.length);
-                newBuffer.set(this.pcmData);
-                newBuffer.set(newData, this.pcmData.length);
-                this.pcmData = newBuffer;
-            }
-
-            async tryPlayBuffer() {
-                if (this.audioContext && this.audioContext.state === "suspended") {
-                    await this.audioContext.resume();
-                }
-                if (!this.headerParsed || this.pcmData.length < this.minBufferSize) return;
-                const bytesPerSample = this.numChannels * 2;
-                const samplesToPlay = Math.floor(this.pcmData.length / bytesPerSample);
-                const bytesToPlay = samplesToPlay * bytesPerSample;
-                if (bytesToPlay === 0) return;
-
-                const dataToPlay = this.pcmData.slice(0, bytesToPlay);
-                this.pcmData = this.pcmData.slice(bytesToPlay);
-
-                const audioBuffer = this.audioContext.createBuffer(this.numChannels, samplesToPlay, this.sampleRate);
-                const int16Data = new Int16Array(dataToPlay.buffer, dataToPlay.byteOffset, samplesToPlay * this.numChannels);
-
-                for (let channel = 0; channel < this.numChannels; channel++) {
-                    const channelData = audioBuffer.getChannelData(channel);
-                    for (let i = 0; i < samplesToPlay; i++) {
-                        channelData[i] = int16Data[i * this.numChannels + channel] / 32768;
-                    }
-                }
-
-                const source = this.audioContext.createBufferSource();
-                source.buffer = audioBuffer;
-                source.connect(this.audioContext.destination);
-
-                const currentTime = this.audioContext.currentTime;
-                const startTime = Math.max(currentTime, this.nextStartTime);
-                source.start(startTime);
-
-                if (!this.firstAudioPlayed && window.firstAudioCallback) {
-                    this.firstAudioPlayed = true;
-                    window.firstAudioCallback();
-                }
-
-                this.nextStartTime = startTime + audioBuffer.duration;
-                this.isPlaying = true;
-
-                if (this.pcmData.length >= this.minBufferSize) {
-                    setTimeout(() => this.tryPlayBuffer(), 10);
-                }
-            }
-
-            addChunk(chunk) {
-                if (!this.headerParsed) {
-                    const headerBytesNeeded = 44 - this.headerBytesReceived;
-                    const bytesToCopy = Math.min(headerBytesNeeded, chunk.length);
-                    this.headerBuffer.set(chunk.slice(0, bytesToCopy), this.headerBytesReceived);
-                    this.headerBytesReceived += bytesToCopy;
-
-                    if (this.headerBytesReceived >= 44) {
-                        this.parseWavHeader(this.headerBuffer);
-                        if (chunk.length > bytesToCopy) {
-                            this.appendPcmData(chunk.slice(bytesToCopy));
-                        }
-                    }
-                } else {
-                    this.appendPcmData(chunk);
-                }
-                this.tryPlayBuffer();
-            }
-
-            stop() {
-                try { this.audioContext.close(); } catch (_) {}
-                this.isPlaying = false;
-            }
-        }
-
-        function showStatus(msg, isSpinner = false) {
-            statusText.textContent = msg;
-            statusSpinner.style.display = isSpinner ? 'block' : 'none';
-            statusEl.classList.remove('hidden');
-        }
-
-        function hideStatus() {
-            statusEl.classList.add('hidden');
-        }
-
-        // Audio Generation
-        generateBtn.addEventListener('click', generateAudio);
-
-        async function generateAudio() {
-            const text = textInput.value.trim();
-            if (!text) {
-                showStatus('Please enter text to generate speech.', false);
-                setTimeout(hideStatus, 3000);
+            if (state.currentAuditioningId === voiceId && !auditionPlayer.paused) {
+                auditionPlayer.pause();
+                icon.textContent = "play_arrow";
+                label.textContent = "Audition";
+                state.currentAuditioningId = null;
                 return;
             }
 
-            const isStreamMode = document.getElementById('mode-stream') && document.getElementById('mode-stream').checked;
+            // Reset all other audition buttons
+            document.querySelectorAll(".btn-audition").forEach(b => {
+                b.querySelector(".material-symbols-outlined").textContent = "play_arrow";
+                b.querySelector("span:not(.material-symbols-outlined)").textContent = "Audition";
+            });
 
-            if (streamingPlayer) {
-                streamingPlayer.stop();
-                streamingPlayer = null;
-            }
-            // ONLY initialize streaming WebAudio if user explicitly selected Live Stream mode
-            if (isStreamMode) {
-                streamingPlayer = new StreamingWavPlayer();
-                if (streamingPlayer.audioContext && streamingPlayer.audioContext.state === 'suspended') {
-                    streamingPlayer.audioContext.resume();
-                }
-            }
+            state.currentAuditioningId = voiceId;
+            icon.textContent = "pause";
+            label.textContent = "Playing...";
 
-            const startTime = performance.now();
-            let firstAudioTime = null;
+            auditionPlayer.src = `/api/voice-sample/${voiceId}`;
+            auditionPlayer.play().catch(e => {
+                console.error("Audition playback error:", e);
+                icon.textContent = "play_arrow";
+                label.textContent = "Audition";
+            });
 
-            window.firstAudioCallback = () => {
-                if (!firstAudioTime) {
-                    firstAudioTime = performance.now();
-                    const ttfb = ((firstAudioTime - startTime) / 1000).toFixed(2);
-                    metricFirstAudio.textContent = `First Audio: ${ttfb}s`;
-                    showStatus(`Streaming speech (first chunk ${ttfb}s)...`, true);
-                }
+            auditionPlayer.onended = () => {
+                icon.textContent = "play_arrow";
+                label.textContent = "Audition";
+                state.currentAuditioningId = null;
             };
+        }
 
-            generateBtn.disabled = true;
-            generateIcon.textContent = "⏳";
-            generateText.textContent = "Synthesizing...";
-            showStatus("Encoding text & prompt...", true);
-            audioSection.classList.add('hidden');
+        // ============================================================
+        // 5. FILE UPLOAD CONTROLLER
+        // ============================================================
+        const dropZone = document.getElementById("drop-zone");
+        const voiceFileInput = document.getElementById("voice-file-input");
+        const uploadPreviewBox = document.getElementById("upload-preview-box");
+        const uploadFilename = document.getElementById("upload-filename");
+        const uploadFilesize = document.getElementById("upload-filesize");
+        const uploadAudioPlayer = document.getElementById("upload-audio-player");
+        const btnRemoveUpload = document.getElementById("btn-remove-upload");
+
+        dropZone.addEventListener("click", () => voiceFileInput.click());
+        dropZone.addEventListener("dragover", (e) => { e.preventDefault(); dropZone.classList.add("border-blue-500", "bg-blue-50/50"); });
+        dropZone.addEventListener("dragleave", () => dropZone.classList.remove("border-blue-500", "bg-blue-50/50"));
+        dropZone.addEventListener("drop", (e) => {
+            e.preventDefault();
+            dropZone.classList.remove("border-blue-500", "bg-blue-50/50");
+            if (e.dataTransfer.files.length) handleUploadedFile(e.dataTransfer.files[0]);
+        });
+
+        voiceFileInput.addEventListener("change", (e) => {
+            if (e.target.files.length) handleUploadedFile(e.target.files[0]);
+        });
+
+        function handleUploadedFile(file) {
+            state.uploadedFile = file;
+            state.activeVoiceType = "uploaded";
+            uploadFilename.textContent = file.name;
+            uploadFilesize.textContent = (file.size / 1024).toFixed(1) + " KB";
+            uploadAudioPlayer.src = URL.createObjectURL(file);
+            dropZone.classList.add("hidden");
+            uploadPreviewBox.classList.remove("hidden");
+
+            updateActiveVoiceBadge(`Uploaded (${file.name})`);
+
+            // Auto-save to IndexedDB
+            dbSaveVoice(null, file.name, file, "uploaded").then(() => loadSavedVoicesUI());
+        }
+
+        btnRemoveUpload.addEventListener("click", () => {
+            state.uploadedFile = null;
+            uploadPreviewBox.classList.add("hidden");
+            dropZone.classList.remove("hidden");
+            voiceFileInput.value = "";
+            selectPresetVoice("rohan", "Rohan");
+        });
+
+        // ============================================================
+        // 6. SAVED VOICES CONTROLLER (INDEXEDDB)
+        // ============================================================
+        async function loadSavedVoicesUI() {
+            const list = document.getElementById("saved-voices-list");
+            const voices = await dbGetAllVoices();
+            list.innerHTML = "";
+
+            if (!voices.length) {
+                list.innerHTML = `<p class="text-xs text-slate-400 italic py-2 col-span-2">No saved voices yet. Record your voice above to save it here!</p>`;
+                return;
+            }
+
+            voices.forEach(v => {
+                const card = document.createElement("div");
+                card.className = "bg-white border border-slate-200 rounded-xl p-3 flex items-center justify-between gap-2 shadow-xs";
+                card.innerHTML = `
+                    <div class="min-w-0">
+                        <h4 class="text-xs font-bold text-slate-800 truncate">${v.name}</h4>
+                        <span class="text-[10px] text-slate-400">${new Date(v.createdAt).toLocaleDateString()}</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <button type="button" class="btn-use-saved text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 px-2 py-1 rounded font-medium transition" data-id="${v.id}">
+                            Use
+                        </button>
+                        <button type="button" class="btn-del-saved text-xs text-slate-400 hover:text-red-500 p-1" data-id="${v.id}">
+                            <span class="material-symbols-outlined text-sm">delete</span>
+                        </button>
+                    </div>
+                `;
+
+                card.querySelector(".btn-use-saved").addEventListener("click", () => {
+                    state.recordedWavBlob = v.blob;
+                    state.activeVoiceType = "recorded";
+                    recordedAudio.src = URL.createObjectURL(v.blob);
+                    recordedPreviewBox.classList.remove("hidden");
+                    updateActiveVoiceBadge(`${v.name} (Saved)`);
+                });
+
+                card.querySelector(".btn-del-saved").addEventListener("click", async () => {
+                    if (confirm(`Delete voice "${v.name}"?`)) {
+                        await dbDeleteVoice(v.id);
+                        loadSavedVoicesUI();
+                    }
+                });
+
+                list.appendChild(card);
+            });
+        }
+
+        // ============================================================
+        // 7. TAB NAVIGATION & BADGES
+        // ============================================================
+        const voiceModeTabs = document.getElementById("voice-mode-tabs");
+        const panelRecord = document.getElementById("panel-record");
+        const panelUpload = document.getElementById("panel-upload");
+        const panelPresets = document.getElementById("panel-presets");
+        const panelSaved = document.getElementById("panel-saved");
+        const activeVoiceName = document.getElementById("active-voice-name");
+
+        voiceModeTabs.addEventListener("change", (e) => {
+            const index = e.target.activeTabIndex;
+            panelRecord.classList.add("hidden");
+            panelUpload.classList.add("hidden");
+            panelPresets.classList.add("hidden");
+            panelSaved.classList.add("hidden");
+
+            if (index === 0) panelRecord.classList.remove("hidden");
+            else if (index === 1) panelUpload.classList.remove("hidden");
+            else if (index === 2) { panelPresets.classList.remove("hidden"); renderPresets(); }
+            else if (index === 3) { panelSaved.classList.remove("hidden"); loadSavedVoicesUI(); }
+        });
+
+        function updateActiveVoiceBadge(name) {
+            activeVoiceName.textContent = name;
+        }
+
+        // ============================================================
+        // 8. SCRIPT & PROMPTS CONTROLLER
+        // ============================================================
+        const textInput = document.getElementById("text-input");
+        const charCount = document.getElementById("char-count");
+        const btnClearText = document.getElementById("btn-clear-text");
+
+        function updateTextCounts() {
+            const text = textInput.value;
+            const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+            charCount.textContent = `${text.length} characters | ${words} words`;
+        }
+
+        textInput.addEventListener("input", updateTextCounts);
+        btnClearText.addEventListener("click", () => {
+            textInput.value = "";
+            updateTextCounts();
+            textInput.focus();
+        });
+
+        document.querySelectorAll(".sample-prompt-chip").forEach(btn => {
+            btn.addEventListener("click", () => {
+                textInput.value = btn.dataset.text;
+                updateTextCounts();
+            });
+        });
+
+        // Advanced Spoken Words Preview
+        const btnToggleSpokenPreview = document.getElementById("btn-toggle-spoken-preview");
+        const btnCloseSpokenPreview = document.getElementById("btn-close-spoken-preview");
+        const spokenPreviewBox = document.getElementById("spoken-preview-box");
+        const spokenPreviewText = document.getElementById("spoken-preview-text");
+        const spokenPreviewChanges = document.getElementById("spoken-preview-changes");
+
+        btnToggleSpokenPreview.addEventListener("click", async () => {
+            const text = textInput.value.trim();
+            if (!text) { alert("Please enter text first."); return; }
+            spokenPreviewBox.classList.remove("hidden");
+            spokenPreviewText.textContent = "Analyzing phonetics & loanwords...";
+            spokenPreviewChanges.innerHTML = "";
 
             try {
-                const formData = new FormData();
-                formData.append('text', text);
-
-                const normMode = document.getElementById('norm-mode-select') ? document.getElementById('norm-mode-select').value : 'auto';
-                const autoNorm = document.getElementById('auto-normalize-checkbox') && document.getElementById('auto-normalize-checkbox').checked;
-                formData.append('normalize_mode', autoNorm ? normMode : 'off');
-
-                // Voice resolution based on active tab
-                if (activeTab === "upload" && voiceWavInput.files[0]) {
-                    formData.append('voice_wav', voiceWavInput.files[0]);
-                } else if (activeTab === "url" && voiceUrlInput.value.trim()) {
-                    formData.append('voice_url', voiceUrlInput.value.trim());
-                } else if (activeTab === "presets" && selectedVoice) {
-                    formData.append('voice_url', selectedVoice);
+                const resp = await fetch("/api/normalize", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ text: text, mode: "auto" })
+                });
+                const data = await resp.json();
+                spokenPreviewText.textContent = data.normalized;
+                if (data.changes && data.changes.length) {
+                    spokenPreviewChanges.innerHTML = data.changes.map(c => 
+                        `<span class="text-[10px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-medium">${c.from} ➔ ${c.to}</span>`
+                    ).join("");
+                } else {
+                    spokenPreviewChanges.innerHTML = `<span class="text-[10px] text-slate-400">All words phonetically clean.</span>`;
                 }
+            } catch (err) {
+                spokenPreviewText.textContent = "Preview error: " + err.message;
+            }
+        });
 
-                const endpoint = `${window.location.pathname.replace(/\/+$/, '')}/tts`;
-                const response = await fetch(endpoint, {
-                    method: 'POST',
+        btnCloseSpokenPreview.addEventListener("click", () => spokenPreviewBox.classList.add("hidden"));
+
+        // ============================================================
+        // 9. SPEECH GENERATION CONTROLLER
+        // ============================================================
+        const btnGenerateSpeech = document.getElementById("btn-generate-speech");
+        const generateBtnLabel = document.getElementById("generate-btn-label");
+        const generateProgressContainer = document.getElementById("generate-progress-container");
+        const generateStatusText = document.getElementById("generate-status-text");
+        const playerContainer = document.getElementById("player-container");
+        const outputAudioPlayer = document.getElementById("output-audio-player");
+        const btnDownloadWav = document.getElementById("btn-download-wav");
+        const btnDownloadSafetensors = document.getElementById("btn-download-safetensors");
+        const playbackSpeedSelect = document.getElementById("playback-speed-select");
+
+        btnGenerateSpeech.addEventListener("click", async () => {
+            const text = textInput.value.trim();
+            if (!text) {
+                alert("Please enter a transcript to speak.");
+                textInput.focus();
+                return;
+            }
+
+            btnGenerateSpeech.disabled = true;
+            generateProgressContainer.classList.remove("hidden");
+            generateStatusText.textContent = "Connecting to speech synthesizer...";
+
+            const formData = new FormData();
+            formData.append("text", text);
+            formData.append("normalize_mode", "auto");
+
+            if (state.activeVoiceType === "recorded" && state.recordedWavBlob) {
+                formData.append("voice_wav", state.recordedWavBlob, "recorded_voice.wav");
+            } else if (state.activeVoiceType === "uploaded" && state.uploadedFile) {
+                formData.append("voice_wav", state.uploadedFile, state.uploadedFile.name);
+            } else {
+                formData.append("voice_url", state.selectedPresetId);
+            }
+
+            const startTime = Date.now();
+
+            try {
+                const response = await fetch("/tts", {
+                    method: "POST",
                     body: formData
                 });
 
                 if (!response.ok) {
-                    const errText = await response.text();
-                    throw new Error(`Server returned ${response.status}: ${errText}`);
+                    const err = await response.text();
+                    throw new Error(err || "Generation failed");
                 }
 
-                let responseForBlob = response;
-                if (isStreamMode && streamingPlayer) {
-                    const responseForStreaming = response.clone();
-                    responseForBlob = response.clone();
-                    const reader = responseForStreaming.body.getReader();
+                generateStatusText.textContent = "Streaming audio output...";
+                const reader = response.body.getReader();
+                const chunks = [];
 
-                    const streamTask = async () => {
-                        try {
-                            while (true) {
-                                const { done, value } = await reader.read();
-                                if (done) break;
-                                if (value && streamingPlayer) {
-                                    streamingPlayer.addChunk(value);
-                                }
-                            }
-                        } catch (e) {
-                            console.error("Stream reader error:", e);
-                        }
-                    };
-                    streamTask();
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    chunks.push(value);
                 }
 
-                // Function to patch the streaming WAV header (which has 1,000,000,000 dummy frames)
-                // into a valid, exact-duration header for browser HTML5 <audio> playback
-                async function patchWavHeader(rawBlob) {
-                    const buffer = await rawBlob.arrayBuffer();
-                    const view = new DataView(buffer);
-                    if (buffer.byteLength >= 44 && view.getUint32(0, false) === 0x52494646) { // 'RIFF'
-                        // Update RIFF chunk size (file size - 8)
-                        view.setUint32(4, buffer.byteLength - 8, true);
-                        // Search for 'data' chunk
-                        for (let i = 12; i < Math.min(256, buffer.byteLength - 8); i++) {
-                            if (view.getUint32(i, false) === 0x64617461) { // 'data'
-                                view.setUint32(i + 4, buffer.byteLength - (i + 8), true);
-                                break;
-                            }
-                        }
-                    }
-                    return new Blob([buffer], { type: 'audio/wav' });
-                }
+                const audioBlob = new Blob(chunks, { type: "audio/wav" });
+                state.lastGeneratedBlob = audioBlob;
 
-                const rawBlob = await responseForBlob.blob();
-                const blob = await patchWavHeader(rawBlob);
-                const totalSeconds = ((performance.now() - startTime) / 1000).toFixed(2);
-                currentAudioBlob = blob;
+                const audioUrl = URL.createObjectURL(audioBlob);
+                outputAudioPlayer.src = audioUrl;
+                playerContainer.classList.remove("hidden");
+                outputAudioPlayer.play().catch(() => {});
 
-                const audioUrl = URL.createObjectURL(blob);
-                audio.src = audioUrl;
-
-                audio.addEventListener('loadedmetadata', () => {
-                    const dur = audio.duration;
-                    const speed = (dur / parseFloat(totalSeconds)).toFixed(1);
-                    speedBadge.textContent = `${speed}x Real-Time`;
-                    metricDuration.textContent = `Audio Duration: ${dur.toFixed(2)}s`;
-                    metricTotalTime.textContent = `Total Time: ${totalSeconds}s`;
-                    showStatus(`✨ Generated ${dur.toFixed(1)}s of audio in ${totalSeconds}s (${speed}x real-time)`, false);
-
-                    // Auto-play removed: wait for user to click play manually
-                    showStatus(`✨ Synthesis Complete! (${dur.toFixed(1)}s audio ready in ${totalSeconds}s). Click ▶ Play below to listen.`, false);
-                }, { once: true });
-
-                downloadLink.href = audioUrl;
-                downloadLink.download = `speech_${Date.now()}.wav`;
-                audioSection.classList.remove('hidden');
+                // Save to IndexedDB history
+                const voiceTitle = state.activeVoiceType === "preset" ? state.selectedPresetId : "Cloned Voice";
+                await dbSaveHistory(text, voiceTitle, audioBlob);
+                loadHistoryUI();
 
             } catch (err) {
-                console.error("Generation error:", err);
-                showStatus(`Error: ${err.message}`, false);
+                console.error("TTS generation error:", err);
+                alert("Speech generation error: " + err.message);
             } finally {
-                generateBtn.disabled = false;
-                generateIcon.textContent = "⚡";
-                generateText.textContent = "Generate Speech";
+                btnGenerateSpeech.disabled = false;
+                generateProgressContainer.classList.add("hidden");
             }
-        }
+        });
 
-        // --- Text Normalization Handlers ---
-        const btnNormalizePreview = document.getElementById('btn-normalize-preview');
-        const normPreviewCard = document.getElementById('norm-preview-card');
-        const normPreviewText = document.getElementById('norm-preview-text');
-        const normChangesTags = document.getElementById('norm-changes-tags');
-        const btnApplyNorm = document.getElementById('btn-apply-norm');
-        const btnCloseNorm = document.getElementById('btn-close-norm');
-        const normModeSelect = document.getElementById('norm-mode-select');
+        // Playback speed
+        playbackSpeedSelect.addEventListener("change", (e) => {
+            outputAudioPlayer.playbackRate = parseFloat(e.target.value);
+        });
 
-        if (btnNormalizePreview) {
-            btnNormalizePreview.addEventListener('click', async () => {
-                const text = textInput.value.trim();
-                if (!text) {
-                    showStatus('Please enter text to normalize.', false);
-                    setTimeout(hideStatus, 2500);
-                    return;
-                }
-                btnNormalizePreview.disabled = true;
-                btnNormalizePreview.innerHTML = '<span>⏳ Checking...</span>';
-                try {
-                    const endpoint = `${window.location.pathname.replace(/\/+$/, '')}/api/normalize`;
-                    const res = await fetch(endpoint, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ text, mode: normModeSelect.value })
-                    });
-                    if (!res.ok) throw new Error(await res.text());
-                    const data = await res.json();
-                    currentNormalizedText = data.normalized;
-                    normPreviewText.textContent = data.normalized;
+        // Download WAV
+        btnDownloadWav.addEventListener("click", () => {
+            if (!state.lastGeneratedBlob) return;
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(state.lastGeneratedBlob);
+            a.download = `speech_${Date.now()}.wav`;
+            a.click();
+        });
 
-                    // Render changes pills
-                    normChangesTags.innerHTML = '';
-                    if (data.changes && data.changes.length > 0) {
-                        data.changes.forEach(ch => {
-                            const pill = document.createElement('span');
-                            pill.className = 'text-[11px] bg-indigo-100 text-indigo-900 px-2 py-0.5 rounded-md font-mono border border-indigo-200';
-                            pill.textContent = `${ch.from} → ${ch.to}`;
-                            normChangesTags.appendChild(pill);
-                        });
-                    } else {
-                        normChangesTags.innerHTML = '<span class="text-[11px] text-slate-500 italic">No digit or abbreviation conversions needed (text is already phonetically normalized).</span>';
-                    }
-                    normPreviewCard.classList.remove('hidden');
-                } catch (e) {
-                    console.error('Normalization error:', e);
-                    showStatus(`Normalization error: ${e.message}`, false);
-                } finally {
-                    btnNormalizePreview.disabled = false;
-                    btnNormalizePreview.innerHTML = '<span>Preview Spoken Form</span>';
-                }
+        // Export Persona (.safetensors)
+        btnDownloadSafetensors.addEventListener("click", async () => {
+            const formData = new FormData();
+            formData.append("persona_name", "my_cloned_persona");
+            if (state.activeVoiceType === "recorded" && state.recordedWavBlob) {
+                formData.append("voice_wav", state.recordedWavBlob, "persona.wav");
+            } else if (state.activeVoiceType === "uploaded" && state.uploadedFile) {
+                formData.append("voice_wav", state.uploadedFile, state.uploadedFile.name);
+            } else {
+                formData.append("voice_url", state.selectedPresetId);
+            }
+
+            try {
+                const resp = await fetch("/api/export-persona", { method: "POST", body: formData });
+                if (!resp.ok) throw new Error("Failed to export persona");
+                const blob = await resp.blob();
+                const a = document.createElement("a");
+                a.href = URL.createObjectURL(blob);
+                a.download = `persona_${Date.now()}.safetensors`;
+                a.click();
+            } catch (err) {
+                alert("Persona export error: " + err.message);
+            }
+        });
+
+        // ============================================================
+        // 10. RECENT GENERATIONS HISTORY TRAY (INDEXEDDB)
+        // ============================================================
+        const historyList = document.getElementById("history-list");
+        const historyEmptyMsg = document.getElementById("history-empty-msg");
+        const btnClearHistory = document.getElementById("btn-clear-history");
+
+        async function loadHistoryUI() {
+            const items = await dbGetAllHistory();
+            if (!items || !items.length) {
+                historyList.innerHTML = "";
+                historyEmptyMsg.classList.remove("hidden");
+                return;
+            }
+
+            historyEmptyMsg.classList.add("hidden");
+            historyList.innerHTML = "";
+
+            // Newest first
+            items.reverse().slice(0, 15).forEach(item => {
+                const row = document.createElement("div");
+                row.className = "bg-white border border-slate-200 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs shadow-xs";
+                const snippet = item.text.length > 80 ? item.text.substring(0, 80) + "..." : item.text;
+                const timeStr = new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                row.innerHTML = `
+                    <div class="space-y-0.5 min-w-0 flex-1">
+                        <div class="flex items-center gap-2">
+                            <span class="font-semibold text-slate-800">${item.voiceName}</span>
+                            <span class="text-[10px] text-slate-400 font-mono">${timeStr}</span>
+                        </div>
+                        <p class="text-slate-600 truncate">${snippet}</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <audio src="${URL.createObjectURL(item.audioBlob)}" controls class="h-7 w-48 sm:w-56"></audio>
+                        <a href="${URL.createObjectURL(item.audioBlob)}" download="speech_${item.id}.wav" class="p-1.5 text-slate-500 hover:text-blue-600 rounded hover:bg-slate-100 transition" title="Download WAV">
+                            <span class="material-symbols-outlined text-sm">download</span>
+                        </a>
+                    </div>
+                `;
+                historyList.appendChild(row);
             });
         }
 
-        if (btnApplyNorm) {
-            btnApplyNorm.addEventListener('click', () => {
-                if (currentNormalizedText) {
-                    textInput.value = currentNormalizedText;
-                    updateCharCount();
-                    normPreviewCard.classList.add('hidden');
-                    showStatus('✅ Applied normalized text to input box!', false);
-                    setTimeout(hideStatus, 2500);
-                }
-            });
-        }
+        btnClearHistory.addEventListener("click", async () => {
+            if (confirm("Clear all generation history from browser storage?")) {
+                await dbClearHistory();
+                loadHistoryUI();
+            }
+        });
 
-        if (btnCloseNorm) {
-            btnCloseNorm.addEventListener('click', () => {
-                normPreviewCard.classList.add('hidden');
-            });
-        }
-
-        // --- Persona Export Handler ---
-        const btnExportPersona = document.getElementById('btn-export-persona');
-        const personaNameInput = document.getElementById('persona-name-input');
-
-        if (btnExportPersona) {
-            btnExportPersona.addEventListener('click', async () => {
-                const name = (personaNameInput.value.trim() || 'my_voice_persona').replace(/[^a-zA-Z0-9_-]/g, '_');
-                const formData = new FormData();
-                formData.append('persona_name', name);
-
-                if (activeTab === 'upload' && voiceWavInput.files[0]) {
-                    formData.append('voice_wav', voiceWavInput.files[0]);
-                } else if (activeTab === 'url' && voiceUrlInput.value.trim()) {
-                    formData.append('voice_url', voiceUrlInput.value.trim());
-                } else if (activeTab === 'presets' && selectedVoice) {
-                    formData.append('voice_url', selectedVoice);
-                } else {
-                    showStatus('Please upload an audio file or select a preset to export as a persona.', false);
-                    setTimeout(hideStatus, 3000);
-                    return;
-                }
-
-                btnExportPersona.disabled = true;
-                btnExportPersona.innerHTML = '<span>⏳ Exporting...</span>';
-                showStatus('Encoding audio & exporting .safetensors persona...', true);
-
-                try {
-                    const endpoint = `${window.location.pathname.replace(/\/+$/, '')}/api/export-persona`;
-                    const res = await fetch(endpoint, {
-                        method: 'POST',
-                        body: formData
-                    });
-                    if (!res.ok) throw new Error(await res.text());
-
-                    const blob = await res.blob();
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `${name}.safetensors`;
-                    document.body.appendChild(a);
-                    a.click();
-                    a.remove();
-                    URL.revokeObjectURL(url);
-
-                    showStatus(`✅ Successfully exported persona "${name}.safetensors"!`, false);
-                    setTimeout(hideStatus, 4000);
-                } catch (e) {
-                    console.error('Export error:', e);
-                    showStatus(`Export failed: ${e.message}`, false);
-                } finally {
-                    btnExportPersona.disabled = false;
-                    btnExportPersona.innerHTML = '<span>Download .safetensors</span>';
-                }
-            });
-        }
+        // Initialize Studio
+        window.addEventListener("DOMContentLoaded", () => {
+            updateTextCounts();
+            renderPresets("all");
+            loadSavedVoicesUI();
+            loadHistoryUI();
+        });
     </script>
 </body>
 </html>

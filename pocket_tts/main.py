@@ -31,7 +31,7 @@ from pocket_tts.models.model_state import export_model_state
 from pocket_tts.models.tts_model import TTSModel
 from pocket_tts.modules.stateful_module import ModelState
 from pocket_tts.utils.logging_utils import enable_logging
-from pocket_tts.utils.utils import _ORIGINS_OF_PREDEFINED_VOICES
+from pocket_tts.utils.utils import _ORIGINS_OF_PREDEFINED_VOICES, download_if_necessary
 
 logger = logging.getLogger(__name__)
 
@@ -81,9 +81,12 @@ async def root() -> str:
     static_path = Path(__file__).parent / "static" / "index.html"
     content = static_path.read_text(encoding="utf-8")
     # Replace the placeholder with the actual default text prompt
-    origin = str(_loaded_model().origin)
-    print(origin)
-    content = content.replace("DEFAULT_TEXT_PROMPT", get_default_text_for_language(origin))
+    try:
+        origin = str(_loaded_model().origin)
+        default_prompt = get_default_text_for_language(origin)
+    except (RuntimeError, ValueError, AttributeError):
+        default_prompt = "कल की meeting 10 बजे reschedule कर देना और updated link मुझे भेज देना।"
+    content = content.replace("DEFAULT_TEXT_PROMPT", default_prompt)
     return content
 
 
@@ -208,6 +211,20 @@ def api_export_persona(
         filename=f"{clean_name}.safetensors",
         background=BackgroundTask(lambda: os.remove(temp_safetensors_path)),
     )
+
+
+@web_app.get("/api/voice-sample/{voice_name}")
+def get_voice_sample(voice_name: str) -> FileResponse:
+    """Stream sample audio of a predefined voice for pre-generation auditioning."""
+    if voice_name not in _ORIGINS_OF_PREDEFINED_VOICES:
+        raise HTTPException(status_code=404, detail="Voice not found")
+    target = _ORIGINS_OF_PREDEFINED_VOICES[voice_name]
+    if target.endswith(".safetensors"):
+        raise HTTPException(status_code=400, detail="Voice sample not available as raw audio")
+    local_path = download_if_necessary(target)
+    suffix = Path(local_path).suffix.lower()
+    media_type = "audio/mpeg" if suffix == ".mp3" else ("audio/flac" if suffix == ".flac" else "audio/wav")
+    return FileResponse(local_path, media_type=media_type)
 
 
 @web_app.post("/tts")
