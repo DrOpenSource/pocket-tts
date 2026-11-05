@@ -41,7 +41,7 @@ xdev     -> https://github.com/Xdev200/pocket-tts          (Old clone reference)
 | Feature | Location | Status |
 | :--- | :--- | :--- |
 | **Multilingual Model Default** | `pocket_tts/default_parameters.py` | Sets `multilingual` (`Thanushttk/pocket-tts-multilingual`) as default language |
-| **Hinglish Loanword Normalization** | `pocket_tts/models/text_chunking.py` | Automatically transliterates 70+ Latin loanwords (`reschedule` $\to$ `रीशेड्यूल`, `meeting` $\to$ `मीटिंग`) |
+| **Algorithmic G2P & Hinglish Engine** | `pocket_tts/models/text_chunking.py` | 100+ curated loanwords + algorithmic G2P phonemizer fallback for unlisted English words + Romanized Hindi |
 | **Indic Danda Sentence Chunking** | `pocket_tts/models/text_chunking.py` | Recognizes `।` and `॥` as terminal punctuation |
 | **Text Normalization Engine** | `pocket_tts/models/text_chunking.py` | Expands digits (`10` $\to$ `दस`), time (`3:30`), currency (`₹`, `$`), ordinals |
 | **7 Indian Voice Presets** | `pocket_tts/utils/utils.py` | Pooja, Priya, Neha, Kabir, Rohan, Aarav, Dev |
