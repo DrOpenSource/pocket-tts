@@ -40,13 +40,13 @@ xdev     -> https://github.com/Xdev200/pocket-tts          (Old clone reference)
 
 | Feature | Location | Status |
 | :--- | :--- | :--- |
+| **Creator Studio (Material 3)** | `pocket_tts/static/index.html` + `main.py` | Google Material 3 UI, in-browser 16-bit PCM mic recorder, preset auditioning, and IndexedDB local persistence |
 | **Multilingual Model Default** | `pocket_tts/default_parameters.py` | Sets `multilingual` (`Thanushttk/pocket-tts-multilingual`) as default language |
 | **Algorithmic G2P & Hinglish Engine** | `pocket_tts/models/text_chunking.py` | 100+ curated loanwords + algorithmic G2P phonemizer fallback for unlisted English words + Romanized Hindi |
 | **Indic Danda Sentence Chunking** | `pocket_tts/models/text_chunking.py` | Recognizes `।` and `॥` as terminal punctuation |
 | **Text Normalization Engine** | `pocket_tts/models/text_chunking.py` | Expands digits (`10` $\to$ `दस`), time (`3:30`), currency (`₹`, `$`), ordinals |
-| **7 Indian Voice Presets** | `pocket_tts/utils/utils.py` | Pooja, Priya, Neha, Kabir, Rohan, Aarav, Dev |
+| **7 Indian Voice Presets** | `pocket_tts/utils/utils.py` | Pooja, Priya, Neha, Kabir, Rohan, Aarav, Dev with instant sample auditioning |
 | **Precomputed Voice Personas** | `pocket_tts/main.py` + Web UI | Instant `.safetensors` persona export & drag-and-drop |
-| **Interactive Normalization UI** | `pocket_tts/static/index.html` | "Preview Normalization" button and side-by-side diff |
 | **Hindi Model Configs** | `pocket_tts/config/hindi*.yaml` | Native configs for Lite (6L) and Base (12L) models |
 | **Voice Cloning Guide** | `docs/VOICE_CLONING_GUIDE.md` | Zero-cost audio preprocessing & hyperparameter tuning guide |
 
