@@ -232,15 +232,40 @@ _HINDI_COMMON_ABBR = {
     "OK": "ओके",
     "vs": "बनाम",
     "vs.": "बनाम",
+    "API": "एपीआई",
+    "UI": "यूआई",
+    "UX": "यूएक्स",
+    "ID": "आईडी",
+    "PIN": "पिन",
+    "URL": "यूआरएल",
+    "PDF": "पीडीएफ",
+    "PPT": "पीपीटी",
+    "SIM": "सिम",
+    "GPS": "जीपीएस",
+    "VPN": "वीपीएन",
+    "WiFi": "वाईफाई",
+    "wifi": "वाईफाई",
 }
 
-_ROMAN_HINDI_STOPWORDS = {
-    "ki", "hai", "hain", "ka", "ke", "ko", "se", "me", "mein", "par",
-    "aur", "bhi", "kya", "nahi", "nahin", "karna", "karo", "karein", "kar",
-    "dena", "do", "de", "lena", "le", "bhej", "bhejo", "aaj", "kal",
-    "hum", "aap", "tum", "mera", "meri", "mere", "tera", "teri", "tere",
-    "yeh", "woh", "baje", "kuch", "bahut", "sab", "saath", "liye", "hota", "hogi"
+_ROMAN_HINDI_WORDS: dict[str, str] = {
+    "kal": "कल", "aaj": "आज", "kar": "कर", "karna": "करना", "karo": "करो", "karein": "करें",
+    "dena": "देना", "do": "दो", "de": "दे", "lena": "लेना", "lo": "लो", "le": "ले",
+    "hai": "है", "hain": "हैं", "ho": "हो", "hoga": "होगा", "hogi": "होगी",
+    "nahi": "नहीं", "nahin": "नहीं", "mat": "मत",
+    "mera": "मेरा", "meri": "मेरी", "mere": "मेरे",
+    "aap": "आप", "tum": "तुम", "hum": "हम", "tera": "तेरा", "teri": "तेरी", "tere": "तेरे",
+    "yeh": "यह", "woh": "वह", "ka": "का", "ke": "के", "ki": "की", "ko": "को",
+    "se": "से", "me": "में", "mein": "में", "par": "पर", "aur": "और", "bhi": "भी",
+    "kya": "क्या", "kyon": "क्यों", "kab": "कब", "kahan": "कहाँ", "kaise": "कैसे",
+    "kuch": "कुछ", "bahut": "बहुत", "sab": "सब", "saath": "साथ", "liye": "लिए",
+    "pehle": "पहले", "baad": "बाद", "sirf": "सिर्फ", "thora": "थोड़ा", "thoda": "थोड़ा",
+    "bhej": "भेज", "bhejo": "भेजो", "bhejna": "भेजना", "batao": "बताओ", "bolo": "बोलो",
+    "dekho": "देखो", "sun": "सुन", "suno": "सुनो", "accha": "अच्छा", "achha": "अच्छा",
+    "theek": "ठीक", "thik": "ठीक", "baje": "बजे", "mujhe": "मुझे", "kripya": "कृपया",
+    "zaroor": "ज़रूर", "namaste": "नमस्ते", "dhanyawad": "धन्यवाद",
 }
+
+_ROMAN_HINDI_STOPWORDS = set(_ROMAN_HINDI_WORDS.keys())
 
 _HINGLISH_LOANWORDS: dict[str, str] = {
     # Meetings & Scheduling
@@ -380,6 +405,58 @@ _HINGLISH_LOANWORDS: dict[str, str] = {
     "done": "डन",
     "start": "स्टार्ट",
     "stop": "स्टॉप",
+
+    # Irregular / Everyday Borrowed Words (High-Frequency Overrides)
+    "receipt": "रिसीट",
+    "receipts": "रिसीट्स",
+    "assignment": "असाइनमेंट",
+    "assignments": "असाइनमेंट्स",
+    "budget": "बजट",
+    "budgets": "बजट्स",
+    "hospital": "हॉस्पिटल",
+    "hospitals": "हॉस्पिटल्स",
+    "doctor": "डॉक्टर",
+    "doctors": "डॉक्टर्स",
+    "computer": "कंप्यूटर",
+    "computers": "कंप्यूटर्स",
+    "laptop": "लैपटॉप",
+    "laptops": "लैपटॉप्स",
+    "flight": "फ्लाइट",
+    "flights": "फ्लाइट्स",
+    "ticket": "टिकट",
+    "tickets": "टिकट्स",
+    "station": "स्टेशन",
+    "stations": "स्टेशन्स",
+    "train": "ट्रेन",
+    "trains": "ट्रेन्स",
+    "bus": "बस",
+    "buses": "बसें",
+    "metro": "मेट्रो",
+    "car": "कार",
+    "cars": "कार्स",
+    "police": "पुलिस",
+    "ambulance": "एंबुलेंस",
+    "medicine": "मेडिसिन",
+    "medicines": "मेडिसिन्स",
+    "clinic": "क्लीनिक",
+    "bank": "बैंक",
+    "banks": "बैंक्स",
+    "discount": "डिस्काउंट",
+    "discounts": "डिस्काउंट्स",
+    "payment": "पेमेंट",
+    "payments": "पेमेंट्स",
+    "invoice": "इनवॉयस",
+    "invoices": "इनवॉयसेस",
+    "salary": "सैलरी",
+    "bonus": "बोनस",
+    "queue": "कतार",
+    "colleague": "कलीग",
+    "colleagues": "कलीग्स",
+    "submit": "सबमिट",
+    "submitted": "सबमिटेड",
+    "submitting": "सबमिटिंग",
+    "compulsory": "कंपलसरी",
+    "mandatory": "मेंडेटरी",
 }
 
 _LOANWORD_SORTED_KEYS = sorted(_HINGLISH_LOANWORDS.keys(), key=len, reverse=True)
@@ -387,6 +464,251 @@ _LOANWORD_PATTERN = re.compile(
     r"\b(" + "|".join(re.escape(k) for k in _LOANWORD_SORTED_KEYS) + r")\b",
     re.IGNORECASE,
 )
+
+# Algorithmic G2P (Grapheme-to-Phoneme) fallback rules for arbitrary English words
+_G2P_PREFIXES = [
+    (r"^com", "कंप"),
+    (r"^con", "कन"),
+    (r"^sub", "सब"),
+    (r"^sus", "सस"),
+    (r"^dis", "डिस"),
+    (r"^mis", "मिस"),
+    (r"^pre", "प्रि"),
+    (r"^per", "पर"),
+    (r"^dep", "डिप"),
+    (r"^rep", "रिप"),
+    (r"^ex", "एक्स"),
+    (r"^in", "इन"),
+    (r"^un", "अन"),
+]
+
+_G2P_SILENT_INITIALS = [
+    (r"^ps", "s"),
+    (r"^pn", "n"),
+    (r"^kn", "n"),
+    (r"^wr", "r"),
+    (r"^gn", "n"),
+    (r"^wh", "w"),
+]
+
+_G2P_SUFFIXES = [
+    (r"isation\b", "ाइजेशन"),
+    (r"ization\b", "ाइजेशन"),
+    (r"ational\b", "ेशनल"),
+    (r"ation\b", "ेशन"),
+    (r"ition\b", "िशन"),
+    (r"ution\b", "्यूशन"),
+    (r"ction\b", "क्शन"),
+    (r"ption\b", "प्शन"),
+    (r"sion\b", "शन"),
+    (r"tion\b", "शन"),
+    (r"izing\b", "ाइजिंग"),
+    (r"ising\b", "ाइजिंग"),
+    (r"ized\b", "ाइज्ड"),
+    (r"ised\b", "ाइज्ड"),
+    (r"ize\b", "ाइज"),
+    (r"ise\b", "ाइज"),
+    (r"ture\b", "चर"),
+    (r"ment\b", "मेंट"),
+    (r"able\b", "एबल"),
+    (r"ible\b", "इबल"),
+    (r"ology\b", "ऑलॉजी"),
+    (r"graphy\b", "ग्राफी"),
+    (r"fully\b", "फुली"),
+    (r"ful\b", "फुल"),
+    (r"less\b", "लेस"),
+    (r"ness\b", "नेस"),
+    (r"ship\b", "शिप"),
+    (r"ward\b", "वर्ड"),
+    (r"wise\b", "वाइज"),
+    (r"ical\b", "िकल"),
+    (r"ing\b", "िंग"),
+    (r"ight\b", "ाइट"),
+    (r"ound\b", "ाउंड"),
+    (r"ould\b", "ुड"),
+    (r"ance\b", "ांस"),
+    (r"ence\b", "ेंस"),
+    (r"ency\b", "ेंसी"),
+    (r"ancy\b", "ांसी"),
+    (r"ity\b", "िटी"),
+    (r"tive\b", "टिव"),
+    (r"sive\b", "सिव"),
+    (r"ory\b", "री"),
+    (r"ary\b", "री"),
+    (r"ous\b", "अस"),
+    (r"ious\b", "ियस"),
+    (r"ive\b", "िव"),
+]
+
+_G2P_CHUNKS = [
+    ("ign", ("ाइन", "ाइन")),
+    ("eipt", ("ीट", "ीट")),
+    ("dge", ("ज", "ज")),
+    ("tch", ("च", "च")),
+    ("sch", ("स्क", "स्क")),
+    ("ck", ("क", "क")),
+    ("ph", ("फ", "फ")),
+    ("sh", ("श", "श")),
+    ("ch", ("च", "च")),
+    ("th", ("थ", "थ")),
+    ("qu", ("क्व", "क्व")),
+    ("wh", ("व", "व")),
+    ("ng", ("ंग", "ंग")),
+    ("nk", ("ंक", "ंक")),
+    ("ee", ("ई", "ी")),
+    ("ea", ("ई", "ी")),
+    ("oo", ("ऊ", "ू")),
+    ("ai", ("ए", "े")),
+    ("ay", ("ए", "े")),
+    ("ey", ("ए", "े")),
+    ("oi", ("ऑय", "ॉय")),
+    ("oy", ("ऑय", "ॉय")),
+    ("ou", ("आउ", "ाउ")),
+    ("ow", ("ओ", "ो")),
+    ("oa", ("ओ", "ो")),
+    ("au", ("ऑ", "ॉ")),
+    ("aw", ("ऑ", "ॉ")),
+    ("ia", ("िया", "िया")),
+    ("io", ("ियो", "ियो")),
+    ("b", ("ब", "ब")),
+    ("c", ("क", "क")),
+    ("d", ("ड", "ड")),
+    ("f", ("फ", "फ")),
+    ("g", ("ग", "ग")),
+    ("h", ("ह", "ह")),
+    ("j", ("ज", "ज")),
+    ("k", ("क", "क")),
+    ("l", ("ल", "ल")),
+    ("m", ("म", "म")),
+    ("n", ("न", "न")),
+    ("p", ("प", "प")),
+    ("q", ("क", "क")),
+    ("r", ("र", "र")),
+    ("s", ("स", "स")),
+    ("t", ("ट", "ट")),
+    ("v", ("व", "व")),
+    ("w", ("व", "व")),
+    ("x", ("क्स", "क्स")),
+    ("y", ("य", "य")),
+    ("z", ("ज़", "ज़")),
+    ("a", ("अ", "ा")),
+    ("e", ("ए", "े")),
+    ("i", ("इ", "ि")),
+    ("o", ("ओ", "ो")),
+    ("u", ("उ", "ु")),
+]
+
+_G2P_VOWEL_CHUNKS = {
+    "a", "e", "i", "o", "u", "ee", "ea", "oo", "ai", "ay", "ey",
+    "oi", "oy", "ou", "ow", "oa", "au", "aw", "ia", "io", "ign", "eipt"
+}
+
+
+def transliterate_english_to_devanagari(word: str) -> str:
+    """
+    Algorithmic G2P transliterator converting arbitrary English words into Devanagari phonetics.
+    Handles prefixes, suffixes, silent letters, soft consonants, and syllable structure.
+    """
+    clean = word.lower().strip()
+    if not clean:
+        return ""
+
+    if clean in _HINGLISH_LOANWORDS:
+        return _HINGLISH_LOANWORDS[clean]
+
+    w = clean
+    for pat, rep in _G2P_SILENT_INITIALS:
+        w = re.sub(pat, rep, w)
+
+    prefix_deva = ""
+    for pat, deva in _G2P_PREFIXES:
+        m = re.search(pat, w)
+        if m:
+            prefix_deva = deva
+            w = w[m.end():]
+            break
+
+    suffix_deva = ""
+    for pat, deva in _G2P_SUFFIXES:
+        m = re.search(pat, w)
+        if m:
+            suffix_deva = deva
+            w = w[:m.start()]
+            break
+
+    if not w:
+        return prefix_deva + suffix_deva
+
+    # Soft C (c -> s before e, i, y)
+    chars = list(w)
+    for i in range(len(chars)):
+        if chars[i] == "c" and i + 1 < len(chars) and chars[i + 1] in ("e", "i", "y"):
+            chars[i] = "s"
+    w = "".join(chars)
+
+    # Magic 'e' at end of stem (e.g. site, code, fine)
+    magic_e = False
+    v_deva_indep, v_deva_matra = "ए", "े"
+    if len(w) >= 3 and w.endswith("e") and w[-2] not in "aeiou" and w[-3] in "aeiou":
+        v = w[-3]
+        magic_e = True
+        if v == "a":
+            v_deva_indep, v_deva_matra = "ए", "े"
+        elif v == "i":
+            v_deva_indep, v_deva_matra = "आइ", "ाइ"
+        elif v == "o":
+            v_deva_indep, v_deva_matra = "ओ", "ो"
+        elif v == "u":
+            v_deva_indep, v_deva_matra = "यू", "्यू"
+        else:
+            v_deva_indep, v_deva_matra = "ए", "े"
+
+    res: list[str] = []
+    if prefix_deva:
+        res.append(prefix_deva)
+        prev_was_consonant = False
+    else:
+        prev_was_consonant = False
+
+    idx = 0
+    while idx < len(w):
+        if magic_e and idx == len(w) - 3:
+            if not prev_was_consonant:
+                res.append(v_deva_indep)
+            else:
+                res.append(v_deva_matra)
+            c = w[idx + 1]
+            c_deva = {
+                "b": "ब", "d": "ड", "f": "फ", "g": "ग", "k": "क", "l": "ल",
+                "m": "म", "n": "न", "p": "प", "r": "र", "s": "स", "t": "ट",
+                "v": "व", "z": "ज़"
+            }.get(c, "ट")
+            res.append(c_deva)
+            break
+
+        matched = False
+        for chunk, (indep, matra) in _G2P_CHUNKS:
+            if w.startswith(chunk, idx):
+                if chunk in _G2P_VOWEL_CHUNKS:
+                    if prev_was_consonant:
+                        res.append(matra)
+                    else:
+                        res.append(indep)
+                    prev_was_consonant = False
+                else:
+                    if prev_was_consonant and not res[-1].endswith("्") and not res[-1].endswith("ं"):
+                        res.append("्")
+                    res.append(indep)
+                    prev_was_consonant = True
+
+                idx += len(chunk)
+                matched = True
+                break
+
+        if not matched:
+            idx += 1
+
+    return "".join(res) + suffix_deva
 
 
 def normalize_text(text: str, mode: str = "auto") -> tuple[str, list[dict[str, str]]]:
@@ -481,6 +803,20 @@ def normalize_text(text: str, mode: str = "auto") -> tuple[str, list[dict[str, s
             return hi_word
 
         text = _LOANWORD_PATTERN.sub(_repl_loanword, text)
+
+        # Fallback for remaining Latin words: check Roman Hindi words first, then algorithmic G2P
+        def _repl_latin_word(m: re.Match[str]) -> str:
+            raw = m.group(0)
+            low = raw.lower()
+            if low in _ROMAN_HINDI_WORDS:
+                hi = _ROMAN_HINDI_WORDS[low]
+                changes.append({"from": raw, "to": hi, "type": "roman_hindi"})
+                return hi
+            hi = transliterate_english_to_devanagari(raw)
+            changes.append({"from": raw, "to": hi, "type": "g2p"})
+            return hi
+
+        text = re.sub(r"\b[a-zA-Z]+\b", _repl_latin_word, text)
 
     else:
         # English normalization

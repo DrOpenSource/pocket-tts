@@ -426,3 +426,36 @@ def test_normalize_hinglish_loanwords():
     assert any(c["from"].lower() == "reschedule" and c["to"] == "रीशेड्यूल" for c in changes)
     assert any(c["from"].lower() == "meeting" and c["to"] == "मीटिंग" for c in changes)
     assert any(c["from"] == "10" and c["to"] == "दस" for c in changes)
+
+
+def test_normalize_g2p_unlisted_words():
+    from pocket_tts.models.text_chunking import normalize_text
+
+    text = "डॉक्टर ने नया prescription दिया है और distribution शुरू हो गया है।"
+    norm, changes = normalize_text(text, mode="auto")
+    assert "प्रिस्क्रिप्शन" in norm
+    assert "डिस्ट्रिब्यूशन" in norm or "डिसट्रिब्यूशन" in norm
+    assert any(c["from"] == "prescription" and c["type"] == "g2p" for c in changes)
+
+
+def test_normalize_romanized_hinglish():
+    from pocket_tts.models.text_chunking import normalize_text
+
+    text = "kal ki meeting 10 baje reschedule kar dena aur updated link mujhe bhej dena."
+    norm, changes = normalize_text(text, mode="auto")
+    assert "कल" in norm
+    assert "मीटिंग" in norm
+    assert "दस बजे" in norm
+    assert "रीशेड्यूल" in norm
+    assert "अपडेटेड" in norm
+    assert "लिंक" in norm
+    assert any(c["type"] == "roman_hindi" for c in changes)
+
+
+def test_english_mode_unaffected():
+    from pocket_tts.models.text_chunking import normalize_text
+
+    text = "This prescription is for the distribution of 50 dollars."
+    norm, changes = normalize_text(text, mode="english")
+    assert norm == "This prescription is for the distribution of fifty dollars."
+    assert not any(c.get("type") in ("g2p", "loanword", "roman_hindi") for c in changes)
