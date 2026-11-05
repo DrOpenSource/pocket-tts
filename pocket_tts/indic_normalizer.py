@@ -785,7 +785,8 @@ def transliterate_english_to_devanagari(word: str) -> str:
 # A time, not part of a longer number such as "1:30:05".
 _TIME = r"(?<![\w.,:])(\d{1,2}):(\d\d)(?![\w:]|[.,]\d)"
 _ENGLISH_TIME = re.compile(_TIME)
-_HINDI_TIME = re.compile(_TIME + r"(?:\s*बजे)?")
+# The time reading says बजे itself, so a typed बजे or Romanized baje is consumed with the time.
+_HINDI_TIME = re.compile(_TIME + r"(?:\s*(?:बजे|baje\b))?", re.IGNORECASE)
 # A whole number token ("1,250", "822.95") with an optional currency sign, scale word, percent sign
 # or ordinal suffix. Commas and periods belong to the token, so a number is never read in halves.
 _NUMBER_START = r"(?<![\w.,:])({currency})?(\d[\d,.]*\d|\d)(\s(?:{scales})(?![\wऀ-ॿ]))?"

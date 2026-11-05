@@ -34,6 +34,9 @@ def test_normalize_numbers_english():
         ("1:30 बजे", "डेढ़ बजे"),
         ("2:30", "ढाई बजे"),
         ("3:30", "साढ़े तीन बजे"),
+        ("1:30 baje", "डेढ़ बजे"),
+        ("3:30 Baje", "साढ़े तीन बजे"),
+        ("3:30   BAJE", "साढ़े तीन बजे"),
         ("14:30 बजे", "ढाई बजे"),
         ("13:45", "पौने दो बजे"),
         ("25:99", "पच्चीस:निन्यानवे"),
@@ -66,6 +69,23 @@ def test_normalize_numbers_hindi_whole_tokens(text: str, expected: str):
 )
 def test_normalize_numbers_english_whole_tokens(text: str, expected: str):
     assert normalize_numbers(text, mode="english") == expected
+
+
+def test_romanized_baje_is_not_doubled_in_hinglish():
+    norm, changes = normalize_text("meeting 3:30 baje hai", mode="auto")
+    assert norm == "मीटिंग साढ़े तीन बजे है"
+    assert {"from": "3:30 baje", "to": "साढ़े तीन बजे", "type": "time"} in changes
+    assert not any(c["from"] == "baje" for c in changes)
+
+
+def test_baje_is_only_consumed_as_a_whole_word():
+    norm, _ = normalize_text("3:30 bajega", mode="hindi")
+    assert norm.startswith("साढ़े तीन बजे ")
+    assert len(norm.split()) == 4
+
+    # A bare hour has no time reading, so its baje stays a word of its own.
+    norm, _ = normalize_text("meeting 5 baje hai", mode="auto")
+    assert norm == "मीटिंग पाँच बजे है"
 
 
 def test_number_fixes_keep_abbreviations_transliteration_and_changes():
