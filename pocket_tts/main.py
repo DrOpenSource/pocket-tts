@@ -221,7 +221,11 @@ def get_voice_sample(voice_name: str) -> FileResponse:
     target = _ORIGINS_OF_PREDEFINED_VOICES[voice_name]
     if target.endswith(".safetensors"):
         raise HTTPException(status_code=400, detail="Voice sample not available as raw audio")
-    local_path = download_if_necessary(target)
+    try:
+        local_path = download_if_necessary(target)
+    except (RuntimeError, ValueError, OSError) as e:
+        logger.error("Failed to download voice sample for %s: %s", voice_name, e)
+        raise HTTPException(status_code=403, detail=f"Voice sample unavailable: {e}") from e
     suffix = Path(local_path).suffix.lower()
     media_type = "audio/mpeg" if suffix == ".mp3" else ("audio/flac" if suffix == ".flac" else "audio/wav")
     return FileResponse(local_path, media_type=media_type)

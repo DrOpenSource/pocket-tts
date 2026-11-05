@@ -119,18 +119,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Badges -->
-            <div class="flex items-center gap-2 text-xs">
-                <span class="inline-flex items-center gap-1.5 bg-white border border-slate-200 px-3 py-1 rounded-full shadow-xs text-slate-700 font-medium">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    24 kHz Streaming
-                </span>
-                <span class="inline-flex items-center gap-1 bg-white border border-slate-200 px-3 py-1 rounded-full shadow-xs text-slate-600">
-                    <span class="material-symbols-outlined text-sm text-blue-600">bolt</span>
-                    Real-time CPU
-                </span>
-            </div>
         </header>
 
         <!-- Step Indicator Bar -->
@@ -183,7 +171,7 @@
                 </md-primary-tab>
                 <md-primary-tab id="tab-presets">
                     <span class="material-symbols-outlined" slot="icon">group</span>
-                    Preset Voices (7)
+                    Preset Voices
                 </md-primary-tab>
                 <md-primary-tab id="tab-saved">
                     <span class="material-symbols-outlined" slot="icon">history_edu</span>
@@ -287,10 +275,9 @@
                 <!-- Filters -->
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                     <md-chip-set id="preset-filters">
-                        <md-filter-chip label="All Voices" selected data-filter="all"></md-filter-chip>
-                        <md-filter-chip label="🇮🇳 Hindi / Hinglish" data-filter="hi"></md-filter-chip>
-                        <md-filter-chip label="🇬🇧 English" data-filter="en"></md-filter-chip>
-                        <md-filter-chip label="🌍 European" data-filter="other"></md-filter-chip>
+                        <md-filter-chip label="🇮🇳 Indian Voices (7)" selected data-filter="indian"></md-filter-chip>
+                        <md-filter-chip label="🇬🇧 English (9)" data-filter="en"></md-filter-chip>
+                        <md-filter-chip label="All Voices (16)" data-filter="all"></md-filter-chip>
                     </md-chip-set>
 
                     <div class="relative w-full sm:w-56">
@@ -570,16 +557,25 @@
     <script>
         // Preset Voices Catalog
         const PRESET_VOICES = [
-            { id: "rohan", name: "Rohan", lang: "hi", flag: "🇮🇳", gender: "Male", desc: "Casual Hinglish creator voice (Recommended)", popular: true },
-            { id: "pooja", name: "Pooja", lang: "hi", flag: "🇮🇳", gender: "Female", desc: "Crisp & natural Hindi female narration", popular: true },
-            { id: "priya", name: "Priya", lang: "hi", flag: "🇮🇳", gender: "Female", desc: "Warm & expressive Hindi female storytelling", popular: true },
-            { id: "kabir", name: "Kabir", lang: "hi", flag: "🇮🇳", gender: "Male", desc: "Deep & authoritative Hindi male narration", popular: true },
-            { id: "dev", name: "Dev", lang: "hi", flag: "🇮🇳", gender: "Male", desc: "Conversational Hindi male voice", popular: true },
-            { id: "neha", name: "Neha", lang: "hi", flag: "🇮🇳", gender: "Female", desc: "Upbeat & friendly Hindi female voice", popular: false },
-            { id: "aarav", name: "Aarav", lang: "en", flag: "🇮🇳", gender: "Male", desc: "Indian English conversational male voice", popular: false },
-            { id: "alba", name: "Alba", lang: "en", flag: "🇬🇧", gender: "Female", desc: "British English casual female voice", popular: false },
-            { id: "marius", name: "Marius", lang: "en", flag: "🇬🇧", gender: "Male", desc: "Natural English storytelling male voice", popular: false },
-            { id: "cosette", name: "Cosette", lang: "en", flag: "🇬🇧", gender: "Female", desc: "Expressive English female voice", popular: false },
+            // 7 Indian Voices (Curated for Hindi, Hinglish & Indian English)
+            { id: "rohan", name: "Rohan", category: "indian", badge: "Hinglish", badgeClass: "bg-blue-50 text-blue-700 border-blue-200", gender: "Male", desc: "Casual Hinglish creator voice (Recommended)" },
+            { id: "pooja", name: "Pooja", category: "indian", badge: "Hindi", badgeClass: "bg-amber-50 text-amber-800 border-amber-200", gender: "Female", desc: "Crisp & natural Hindi female narration" },
+            { id: "priya", name: "Priya", category: "indian", badge: "Hindi", badgeClass: "bg-amber-50 text-amber-800 border-amber-200", gender: "Female", desc: "Warm & expressive Hindi female storytelling" },
+            { id: "kabir", name: "Kabir", category: "indian", badge: "Hindi", badgeClass: "bg-amber-50 text-amber-800 border-amber-200", gender: "Male", desc: "Deep & authoritative Hindi male narration" },
+            { id: "dev", name: "Dev", category: "indian", badge: "Hindi", badgeClass: "bg-amber-50 text-amber-800 border-amber-200", gender: "Male", desc: "Conversational Hindi male voice" },
+            { id: "neha", name: "Neha", category: "indian", badge: "Hindi", badgeClass: "bg-amber-50 text-amber-800 border-amber-200", gender: "Female", desc: "Upbeat & friendly Hindi female voice" },
+            { id: "aarav", name: "Aarav", category: "indian", badge: "Indian English", badgeClass: "bg-emerald-50 text-emerald-800 border-emerald-200", gender: "Male", desc: "Indian English conversational male voice" },
+
+            // 9 English Voices (Kyutai Public Voices)
+            { id: "alba", name: "Alba", category: "en", badge: "English", badgeClass: "bg-slate-100 text-slate-700 border-slate-200", gender: "Female", desc: "British English casual female voice" },
+            { id: "marius", name: "Marius", category: "en", badge: "English", badgeClass: "bg-slate-100 text-slate-700 border-slate-200", gender: "Male", desc: "Natural English storytelling male voice" },
+            { id: "cosette", name: "Cosette", category: "en", badge: "English", badgeClass: "bg-slate-100 text-slate-700 border-slate-200", gender: "Female", desc: "Expressive English female voice" },
+            { id: "javert", name: "Javert", category: "en", badge: "English", badgeClass: "bg-slate-100 text-slate-700 border-slate-200", gender: "Male", desc: "Deep & clear English male voice" },
+            { id: "jean", name: "Jean", category: "en", badge: "English", badgeClass: "bg-slate-100 text-slate-700 border-slate-200", gender: "Male", desc: "Freeform conversational English male voice" },
+            { id: "anna", name: "Anna", category: "en", badge: "English", badgeClass: "bg-slate-100 text-slate-700 border-slate-200", gender: "Female", desc: "Clean studio English female voice" },
+            { id: "eponine", name: "Eponine", category: "en", badge: "English", badgeClass: "bg-slate-100 text-slate-700 border-slate-200", gender: "Female", desc: "Narrative English female voice" },
+            { id: "george", name: "George", category: "en", badge: "English", badgeClass: "bg-slate-100 text-slate-700 border-slate-200", gender: "Male", desc: "Articulate English male voice" },
+            { id: "jane", name: "Jane", category: "en", badge: "English", badgeClass: "bg-slate-100 text-slate-700 border-slate-200", gender: "Female", desc: "Smooth English female voice" },
         ];
 
         // State Machine
@@ -866,34 +862,56 @@
         // 4. PRESETS RENDERING & INSTANT AUDITIONING
         // ============================================================
         const presetsGrid = document.getElementById("presets-grid");
+        const presetFilters = document.getElementById("preset-filters");
+        const presetSearchInput = document.getElementById("preset-search-input");
         const auditionPlayer = document.getElementById("audition-audio-player");
+        let activeFilter = "indian"; // Default selected filter is Indian Voices (7)
 
-        function renderPresets(filter = "all", search = "") {
+        function renderPresets(filter = activeFilter, search = "") {
             presetsGrid.innerHTML = "";
-            const filtered = PRESET_VOICES.filter(v => {
-                const matchFilter = filter === "all" || (filter === "hi" && v.lang === "hi") || (filter === "en" && v.lang === "en") || (filter === "other" && v.lang !== "hi" && v.lang !== "en");
-                const matchSearch = !search || v.name.toLowerCase().includes(search.toLowerCase()) || v.desc.toLowerCase().includes(search.toLowerCase());
+            const q = search.trim().toLowerCase();
+            const filtered = PRESET_VOICES.filter(voice => {
+                const matchFilter = (filter === "all") || (voice.category === filter);
+                const matchSearch = !q ||
+                    voice.name.toLowerCase().includes(q) ||
+                    voice.desc.toLowerCase().includes(q) ||
+                    voice.badge.toLowerCase().includes(q);
                 return matchFilter && matchSearch;
             });
 
+            if (filtered.length === 0) {
+                presetsGrid.innerHTML = `
+                    <div class="col-span-full py-8 text-center text-xs text-slate-400">
+                        <p>No voices found matching your criteria.</p>
+                    </div>
+                `;
+                return;
+            }
+
             filtered.forEach(voice => {
                 const isSelected = state.activeVoiceType === "preset" && state.selectedPresetId === voice.id;
+                const isAuditioning = state.currentAuditioningId === voice.id && !auditionPlayer.paused;
                 const card = document.createElement("div");
                 card.className = `voice-card p-3 flex flex-col justify-between gap-2.5 ${isSelected ? 'selected' : ''}`;
                 card.dataset.id = voice.id;
 
                 card.innerHTML = `
                     <div class="flex items-start justify-between gap-2">
-                        <div class="flex items-center gap-2">
-                            <span class="text-xl">${voice.flag}</span>
-                            <div>
-                                <h4 class="text-sm font-bold text-slate-900">${voice.name}</h4>
-                                <span class="text-[10px] font-medium text-slate-500">${voice.gender} • ${voice.lang.toUpperCase()}</span>
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-tr ${voice.category === 'indian' ? 'from-blue-600 to-indigo-600' : 'from-slate-600 to-slate-700'} text-white flex items-center justify-center text-xs font-bold shrink-0">
+                                ${voice.name.charAt(0)}
+                            </div>
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <h4 class="text-sm font-bold text-slate-900">${voice.name}</h4>
+                                    <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold border ${voice.badgeClass}">${voice.badge}</span>
+                                </div>
+                                <span class="text-[11px] text-slate-500">${voice.gender}</span>
                             </div>
                         </div>
-                        <button type="button" class="btn-audition text-xs inline-flex items-center gap-1 bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 px-2 py-1 rounded-lg border border-slate-200 transition" data-id="${voice.id}" title="Listen to voice sample">
-                            <span class="material-symbols-outlined text-sm">play_arrow</span>
-                            <span>Audition</span>
+                        <button type="button" class="btn-audition text-xs inline-flex items-center gap-1 bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 px-2 py-1 rounded-lg border border-slate-200 transition shrink-0" data-id="${voice.id}" title="Listen to voice sample">
+                            <span class="material-symbols-outlined text-sm">${isAuditioning ? 'pause' : 'play_arrow'}</span>
+                            <span>${isAuditioning ? 'Playing...' : 'Audition'}</span>
                         </button>
                     </div>
                     <p class="text-xs text-slate-600 leading-snug line-clamp-2">${voice.desc}</p>
@@ -913,6 +931,27 @@
                 });
 
                 presetsGrid.appendChild(card);
+            });
+        }
+
+        // Preset filter chips interaction
+        if (presetFilters) {
+            presetFilters.addEventListener("click", (e) => {
+                const chip = e.target.closest("md-filter-chip");
+                if (!chip) return;
+                const chips = presetFilters.querySelectorAll("md-filter-chip");
+                chips.forEach(c => {
+                    c.selected = (c === chip);
+                });
+                activeFilter = chip.dataset.filter || "indian";
+                renderPresets(activeFilter, presetSearchInput ? presetSearchInput.value : "");
+            });
+        }
+
+        // Real-time search filter
+        if (presetSearchInput) {
+            presetSearchInput.addEventListener("input", (e) => {
+                renderPresets(activeFilter, e.target.value);
             });
         }
 
@@ -1077,7 +1116,10 @@
 
             if (index === 0) panelRecord.classList.remove("hidden");
             else if (index === 1) panelUpload.classList.remove("hidden");
-            else if (index === 2) { panelPresets.classList.remove("hidden"); renderPresets(); }
+            else if (index === 2) {
+                panelPresets.classList.remove("hidden");
+                renderPresets(activeFilter, presetSearchInput ? presetSearchInput.value : "");
+            }
             else if (index === 3) { panelSaved.classList.remove("hidden"); loadSavedVoicesUI(); }
         });
 
@@ -1323,7 +1365,7 @@
         // Initialize Studio
         window.addEventListener("DOMContentLoaded", () => {
             updateTextCounts();
-            renderPresets("all");
+            renderPresets(activeFilter);
             loadSavedVoicesUI();
             loadHistoryUI();
         });
