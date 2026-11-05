@@ -41,6 +41,7 @@ xdev     -> https://github.com/Xdev200/pocket-tts          (Old clone reference)
 | Feature | Location | Status |
 | :--- | :--- | :--- |
 | **Multilingual Model Default** | `pocket_tts/default_parameters.py` | Sets `multilingual` (`Thanushttk/pocket-tts-multilingual`) as default language |
+| **Hinglish Loanword Normalization** | `pocket_tts/models/text_chunking.py` | Automatically transliterates 70+ Latin loanwords (`reschedule` $\to$ `रीशेड्यूल`, `meeting` $\to$ `मीटिंग`) |
 | **Indic Danda Sentence Chunking** | `pocket_tts/models/text_chunking.py` | Recognizes `।` and `॥` as terminal punctuation |
 | **Text Normalization Engine** | `pocket_tts/models/text_chunking.py` | Expands digits (`10` $\to$ `दस`), time (`3:30`), currency (`₹`, `$`), ordinals |
 | **7 Indian Voice Presets** | `pocket_tts/utils/utils.py` | Pooja, Priya, Neha, Kabir, Rohan, Aarav, Dev |
@@ -60,7 +61,7 @@ xdev     -> https://github.com/Xdev200/pocket-tts          (Old clone reference)
 ### Task 2: Host on Server (`clone.taqnik.in`)
 - **Dokploy Deployment Command**:
   ```bash
-  sh -c "cd /app && ([ -d .git ] && git pull origin personal-dev || git clone -b personal-dev https://github.com/DrOpenSource/pocket-tts.git .) ; uv run pocket-tts serve --language multilingual --host 0.0.0.0 --port 8000"
+  sh -c "cd /app && ([ -d .git ] && (git fetch origin personal-dev && git reset --hard origin/personal-dev) || git clone -b personal-dev https://github.com/DrOpenSource/pocket-tts.git .) ; uv run pocket-tts serve --language multilingual --host 0.0.0.0 --port 8000"
   ```
 - **Docker Compose**: `docker compose up -d --build` (runs `--language multilingual` on port 8000)
 - **Cloudflare DNS**:
