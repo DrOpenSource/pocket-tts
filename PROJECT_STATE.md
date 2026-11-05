@@ -1,18 +1,18 @@
 # Project State & Handoff (DrOpenSource Pocket TTS)
 
-_Last Updated: November 5, 2026_
+_Last Updated: November 6, 2026_
 
 ---
 
 ## 1. Quick Context for Incoming Agents
 
 - **User**: DrOpenSource (`imkashyaps@gmail.com`)
-- **Primary Upstream**: [`kyutai-labs/pocket-tts`](https://github.com/kyutai-labs/pocket-tts)
-- **User Fork**: [`DrOpenSource/pocket-tts`](https://github.com/DrOpenSource/pocket-tts)
-- **Active Pull Request**: **[PR #412](https://github.com/kyutai-labs/pocket-tts/pull/412)**
+- **Original Project**: [`kyutai-labs/pocket-tts`](https://github.com/kyutai-labs/pocket-tts) (**no longer synced**, see Section 4)
+- **User Fork**: [`DrOpenSource/pocket-tts`](https://github.com/DrOpenSource/pocket-tts) (public, maintained independently)
+- **Open Pull Request**: **[PR #412](https://github.com/kyutai-labs/pocket-tts/pull/412)**
   - _Title_: `Add Indic punctuation (danda) sentence chunking and text normalization`
-  - _Status_: **OPEN & 100% GREEN CI** (pytest on Python 3.14, rust, ty 3.10, ty 3.14 all passing).
-  - _Action_: **DO NOT CLOSE.** Awaiting Kyutai maintainer review/merge.
+  - _Status_: **OPEN, MERGEABLE, ALL CI PASSING** at `64de5c9` (Nov 5, 2026). Reworked by the maintainer in `f6bf603`; no formal review yet.
+  - _Action_: **DO NOT CLOSE.** Nothing further is needed unless the maintainer asks. `personal-dev` does not depend on it.
 - **Production Deployment**: **`https://clone.taqnik.in`** (Running on Hostinger VPS via Dokploy / Docker)
 
 ---
@@ -21,7 +21,7 @@ _Last Updated: November 5, 2026_
 
 ```
 origin   -> https://github.com/DrOpenSource/pocket-tts.git  (User's Fork)
-upstream -> https://github.com/kyutai-labs/pocket-tts.git  (Official Kyutai Repository)
+upstream -> https://github.com/kyutai-labs/pocket-tts.git  (Original project: PR #412 and reading only)
 xdev     -> https://github.com/Xdev200/pocket-tts          (Old clone reference)
 ```
 
@@ -31,9 +31,9 @@ xdev     -> https://github.com/Xdev200/pocket-tts          (Old clone reference)
    - Contains all production features, default multilingual engine (`DEFAULT_LANGUAGE = "multilingual"`), 7 Indian voice presets (Pooja, Priya, Neha, Kabir, Rohan, Aarav, Dev), `.safetensors` persona caching, text normalizer, and Docker configurations.
    - Pushed and backed up on GitHub at `DrOpenSource/pocket-tts:personal-dev`.
 2. **`pr/indic-punctuation-and-normalizer`**:
-   - Clean, minimal 4-file branch backing upstream PR #412.
+   - Branch backing upstream PR #412. Contains a maintainer commit: update it with merges, never force-push.
 3. **`main`**:
-   - Clean mirror tracking `upstream/main`.
+   - Old upstream mirror, no longer updated. Do not commit to it or branch from it.
 
 ---
 
@@ -45,9 +45,9 @@ xdev     -> https://github.com/Xdev200/pocket-tts          (Old clone reference)
 | **Clean Header & Navigation**         | `pocket_tts/static/index.html`             | "Clone Voice Studio" branding, clean subtitle, removed clutter badges, 3-step progress bar                   |
 | **Dynamic Preset Filtering**          | `pocket_tts/static/index.html`             | Filter chips for 🇮🇳 Indian Voices (7), 🇬🇧 English (9), and All Voices (16) with real-time search            |
 | **Multilingual Model Default**        | `pocket_tts/default_parameters.py`         | Sets `multilingual` (`Thanushttk/pocket-tts-multilingual`) as default language                                |
-| **Algorithmic G2P & Hinglish Engine** | `pocket_tts/models/text_chunking.py`       | 100+ curated loanwords + algorithmic G2P phonemizer fallback for unlisted English words + Romanized Hindi     |
+| **Algorithmic G2P & Hinglish Engine** | `pocket_tts/indic_normalizer.py`           | 100+ curated loanwords + algorithmic G2P phonemizer fallback for unlisted English words + Romanized Hindi     |
 | **Indic Danda Sentence Chunking**     | `pocket_tts/models/text_chunking.py`       | Recognizes `।` and `॥` as terminal punctuation                                                                |
-| **Text Normalization Engine**         | `pocket_tts/models/text_chunking.py`       | Expands digits (`10` $\to$ `दस`), time (`3:30`), currency (`₹`, `$`), ordinals                                |
+| **Text Normalization Engine**         | `pocket_tts/indic_normalizer.py`           | Expands digits (`10` $\to$ `दस`), time, currency, ordinals, Indian grouping (`₹1,25,000`), spoken decimals      |
 | **7 Indian Voice Presets**            | `pocket_tts/utils/utils.py`                | Pooja, Priya, Neha, Kabir, Rohan, Aarav, Dev with instant sample auditioning                                  |
 | **Precomputed Voice Personas**        | `pocket_tts/main.py` + Web UI              | Instant `.safetensors` persona export & drag-and-drop                                                         |
 | **Hindi Model Configs**               | `pocket_tts/config/hindi*.yaml`            | Native configs for Lite (6L) and Base (12L) models                                                            |
@@ -57,10 +57,22 @@ xdev     -> https://github.com/Xdev200/pocket-tts          (Old clone reference)
 
 ## 4. Immediate Next Tasks for Future Sessions
 
-### Task 1: Monitor PR #412
+### Independent Fork (decided November 6, 2026)
 
-- Check if Kyutai maintainers have requested any minor adjustments.
-- If edits are requested, apply them on `pr/indic-punctuation-and-normalizer` and push.
+- This fork no longer syncs with `kyutai-labs/pocket-tts`, and it stays public. Conflicts only come from taking in upstream changes.
+- Never merge, rebase or pull `upstream/main` into `personal-dev`, and do not use GitHub's "Sync fork" button on it.
+- To take a single upstream fix, use `git cherry-pick -x <commit>` on a `fix/*` branch, only when the user asks.
+- The fork takes on its own bug fixes and dependency updates, including PyTorch and security patches.
+- `AGENTS.md` has a local, uncommitted workflow section. Do not commit it, and stage files by name.
+
+### Code Differences to Keep
+
+- Upstream normalizes numbers per model config. This fork uses `pocket_tts/indic_normalizer.py` for its per-request `auto` mode, `changes` list, abbreviations and transliterator.
+- Keep the vocabulary scan in `get_punctuation_tokens`. Upstream's `tokenizer(".!...?")` probe misses the plain `.` on the multilingual tokenizer, which merges sentences into one chunk.
+
+### Task 1: PR #412
+
+- Update it only if the maintainer asks. Use a separate worktree and `git merge upstream/main`, and never force-push: the branch holds a maintainer commit.
 
 ### Task 2: Host on Server (`clone.taqnik.in`)
 
@@ -74,17 +86,17 @@ xdev     -> https://github.com/Xdev200/pocket-tts          (Old clone reference)
   - Cloudflare Origin Rule: Rewrite destination port to `8000` for `clone.taqnik.in`
   - SSL/TLS: Flexible
 
-### Task 3: PR 2 Preparation (Precomputed Persona `.safetensors` Export)
+### Task 3: Upstream Persona PR (dropped)
 
-- Once PR #412 is merged, branch off upstream `main` into `pr/safetensors-persona-caching` to propose the `.safetensors` persona export feature upstream.
+- Dropped because the fork is now independent. Upstream already has a CLI `export-voice` command; the `/api/export-persona` endpoint and web UI stay in this fork.
 
 ---
 
 ## 5. Verification Commands
 
 ```powershell
-# Run all unit tests (44 tests)
-uv run pytest -n 3 -v tests/test_split_sentences.py tests/test_python_api.py
+# Run the text and API tests
+uv run pytest -n 3 -v tests/test_split_sentences.py tests/test_indic_normalizer.py tests/test_python_api.py
 
 # Static type check
 uv run ty check pocket_tts tests
