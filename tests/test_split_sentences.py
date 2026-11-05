@@ -415,3 +415,14 @@ def test_normalize_numbers_english():
     assert normalize_numbers("$50", mode="english") == "fifty dollars"
     assert normalize_numbers("50%", mode="english") == "fifty percent"
     assert normalize_numbers("1st", mode="english") == "first"
+
+
+def test_normalize_hinglish_loanwords():
+    from pocket_tts.models.text_chunking import normalize_text
+
+    text = "कल की meeting 10 बजे reschedule कर देना और updated link मुझे भेज देना।"
+    norm, changes = normalize_text(text, mode="auto")
+    assert norm == "कल की मीटिंग दस बजे रीशेड्यूल कर देना और अपडेटेड लिंक मुझे भेज देना।"
+    assert any(c["from"].lower() == "reschedule" and c["to"] == "रीशेड्यूल" for c in changes)
+    assert any(c["from"].lower() == "meeting" and c["to"] == "मीटिंग" for c in changes)
+    assert any(c["from"] == "10" and c["to"] == "दस" for c in changes)

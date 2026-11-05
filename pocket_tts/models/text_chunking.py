@@ -234,15 +234,174 @@ _HINDI_COMMON_ABBR = {
     "vs.": "बनाम",
 }
 
+_ROMAN_HINDI_STOPWORDS = {
+    "ki", "hai", "hain", "ka", "ke", "ko", "se", "me", "mein", "par",
+    "aur", "bhi", "kya", "nahi", "nahin", "karna", "karo", "karein", "kar",
+    "dena", "do", "de", "lena", "le", "bhej", "bhejo", "aaj", "kal",
+    "hum", "aap", "tum", "mera", "meri", "mere", "tera", "teri", "tere",
+    "yeh", "woh", "baje", "kuch", "bahut", "sab", "saath", "liye", "hota", "hogi"
+}
+
+_HINGLISH_LOANWORDS: dict[str, str] = {
+    # Meetings & Scheduling
+    "reschedule": "रीशेड्यूल",
+    "rescheduled": "रीशेड्यूल्ड",
+    "rescheduling": "रीशेड्यूलिंग",
+    "schedule": "शेड्यूल",
+    "scheduled": "शेड्यूल्ड",
+    "scheduling": "शेड्यूलिंग",
+    "meeting": "मीटिंग",
+    "meetings": "मीटिंग्स",
+    "appointment": "अपॉइंटमेंट",
+    "appointments": "अपॉइंटमेंट्स",
+    "deadline": "डेडलाइन",
+    "deadlines": "डेडलाइन्स",
+    "cancel": "कैंसिल",
+    "cancelled": "कैंसिल्ड",
+    "canceling": "कैंसलिंग",
+    "cancellation": "कैंसिलेशन",
+    "confirm": "कन्फर्म",
+    "confirmed": "कन्फर्मड",
+    "confirmation": "कन्फर्मेशन",
+    "postpone": "पोस्टपोन",
+    "postponed": "पोस्टपोंड",
+
+    # Communication & Tech
+    "link": "लिंक",
+    "links": "लिंक्स",
+    "updated": "अपडेटेड",
+    "update": "अपडेट",
+    "updates": "अपडेट्स",
+    "message": "मैसेज",
+    "messages": "मैसेजेस",
+    "call": "कॉल",
+    "calls": "कॉल्स",
+    "calling": "कॉलिंग",
+    "email": "ईमेल",
+    "emails": "ईमेल्स",
+    "chat": "चैट",
+    "chats": "चैट्स",
+    "video": "वीडियो",
+    "videos": "वीडियोज",
+    "audio": "ऑडियो",
+    "audios": "ऑडियोज",
+    "share": "शेयर",
+    "shared": "शेयर्ड",
+    "sharing": "शेयरिंग",
+    "send": "सेंड",
+    "sent": "सेंट",
+    "sending": "सेंडिंग",
+    "check": "चेक",
+    "checked": "चेक्ड",
+    "checking": "चेकिंग",
+    "online": "ऑनलाइन",
+    "offline": "ऑफलाइन",
+    "download": "डाउनलोड",
+    "downloaded": "डाउनलोडेड",
+    "upload": "अपलोड",
+    "uploaded": "अपलोडेड",
+    "login": "लॉगिन",
+    "logout": "लॉगआउट",
+    "password": "पासवर्ड",
+    "account": "अकाउंट",
+    "accounts": "अकाउंट्स",
+    "profile": "प्रोफाइल",
+    "notification": "नोटिफिकेशन",
+    "notifications": "नोटिफिकेशन्स",
+    "status": "स्टेटस",
+    "report": "रिपोर्ट",
+    "reports": "रिपोर्ट्स",
+    "feedback": "फीडबैक",
+    "review": "रिव्यू",
+    "reviews": "रिव्यूज",
+
+    # Work & Business
+    "office": "ऑफिस",
+    "project": "प्रोजेक्ट",
+    "projects": "प्रोजेक्ट्स",
+    "client": "क्लाइंट",
+    "clients": "क्लाइंट्स",
+    "team": "टीम",
+    "teams": "टीम्स",
+    "presentation": "प्रेजेंटेशन",
+    "presentations": "प्रेजेंटेशन्स",
+    "problem": "प्रॉब्लम",
+    "problems": "प्रॉब्लम्स",
+    "issue": "इश्यू",
+    "issues": "इश्यूज",
+    "urgent": "अर्जेंट",
+    "urgently": "अर्जेंटली",
+    "important": "इम्पॉर्टेंट",
+    "approved": "अप्रूव्ड",
+    "approve": "अप्रूव",
+    "approval": "अप्रूवल",
+    "pending": "पेंडिंग",
+    "reject": "रिजेक्ट",
+    "rejected": "रिजेक्टेड",
+    "interview": "इंटरव्यू",
+    "manager": "मैनेजर",
+    "developer": "डेवलपर",
+    "design": "डिजाइन",
+    "system": "सिस्टम",
+    "service": "सर्विस",
+    "setup": "सेटअप",
+    "test": "टेस्ट",
+    "testing": "टेस्टिंग",
+    "verified": "वेरीफाइड",
+    "verify": "वेरीफाई",
+    "connect": "कनेक्ट",
+    "connected": "कनेक्टेड",
+    "network": "नेटवर्क",
+    "server": "सर्वर",
+    "website": "वेबसाइट",
+    "app": "ऐप",
+    "apps": "ऐप्स",
+    "document": "डॉक्यूमेंट",
+    "documents": "डॉक्यूमेंट्स",
+    "file": "फाइल",
+    "files": "फाइल्स",
+    "folder": "फ़ोल्डर",
+
+    # Common Conversational
+    "plan": "प्लान",
+    "plans": "प्लान्स",
+    "simple": "सिंपल",
+    "busy": "बिजी",
+    "free": "फ्री",
+    "fast": "फास्ट",
+    "slow": "स्लो",
+    "please": "प्लीज",
+    "thanks": "थैंक्स",
+    "thank you": "थैंक यू",
+    "welcome": "वेलकम",
+    "sorry": "सॉरी",
+    "hello": "हेलो",
+    "ready": "रेडी",
+    "done": "डन",
+    "start": "स्टार्ट",
+    "stop": "स्टॉप",
+}
+
+_LOANWORD_SORTED_KEYS = sorted(_HINGLISH_LOANWORDS.keys(), key=len, reverse=True)
+_LOANWORD_PATTERN = re.compile(
+    r"\b(" + "|".join(re.escape(k) for k in _LOANWORD_SORTED_KEYS) + r")\b",
+    re.IGNORECASE,
+)
+
 
 def normalize_text(text: str, mode: str = "auto") -> tuple[str, list[dict[str, str]]]:
-    """Normalize numeric digits, ordinals, currencies, and abbreviations into spoken words."""
+    """Normalize numeric digits, ordinals, currencies, abbreviations, and Hinglish loanwords."""
     changes: list[dict[str, str]] = []
     text = text.translate(_DEVANAGARI_DIGITS_TRANS)
 
-    is_hi = (mode in ("hindi", "hinglish")) or (
-        mode == "auto" and bool(re.search(r"[\u0900-\u097F]", text))
-    )
+    has_devanagari = bool(re.search(r"[\u0900-\u097F]", text))
+    if not has_devanagari and mode == "auto":
+        words_in_text = set(re.findall(r"\b[a-zA-Z]+\b", text.lower()))
+        is_roman_hinglish = len(words_in_text.intersection(_ROMAN_HINDI_STOPWORDS)) >= 2
+    else:
+        is_roman_hinglish = False
+
+    is_hi = (mode in ("hindi", "hinglish")) or has_devanagari or is_roman_hinglish
 
     if is_hi:
         # Currency: ₹ and $
@@ -313,6 +472,15 @@ def normalize_text(text: str, mode: str = "auto") -> tuple[str, list[dict[str, s
             return rep
 
         text = re.sub(r"\b\d+\b", _repl_num, text)
+
+        # English loanwords in Hindi/Hinglish (e.g. 'reschedule' -> 'रीशेड्यूल', 'meeting' -> 'मीटिंग')
+        def _repl_loanword(m: re.Match[str]) -> str:
+            matched_key = m.group(1).lower()
+            hi_word = _HINGLISH_LOANWORDS[matched_key]
+            changes.append({"from": m.group(1), "to": hi_word, "type": "loanword"})
+            return hi_word
+
+        text = _LOANWORD_PATTERN.sub(_repl_loanword, text)
 
     else:
         # English normalization
