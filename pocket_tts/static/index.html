@@ -356,9 +356,10 @@
                     <span>Phonetic loanword & number expansion enabled automatically</span>
                 </span>
                 <button type="button" id="btn-toggle-spoken-preview" class="text-blue-600 hover:text-blue-800 underline font-medium">
-                    Preview Spoken Words
+                    Check Pronunciation
                 </button>
             </div>
+            <p class="text-[11px] text-slate-400">Tip: Hindi reads best in देवनागरी. English words can stay in English.</p>
 
             <!-- Hidden Inline Preview Box -->
             <div id="spoken-preview-box" class="hidden bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2">
@@ -367,7 +368,14 @@
                     <button type="button" id="btn-close-spoken-preview" class="text-slate-400 hover:text-slate-600">✕</button>
                 </div>
                 <div id="spoken-preview-text" class="text-xs text-slate-800 bg-white p-2.5 rounded-lg border border-slate-200 leading-relaxed font-mono"></div>
+                <p id="pronunciation-guidance" class="hidden text-[11px] text-amber-700">Amber words are our best guess. Click one to fix how it sounds.</p>
                 <div id="spoken-preview-changes" class="flex flex-wrap gap-1"></div>
+                <div id="pronunciation-editor" class="hidden flex flex-wrap items-center gap-2 pt-1">
+                    <label for="pronunciation-input" id="pronunciation-label" class="text-[11px] font-medium text-slate-700"></label>
+                    <input id="pronunciation-input" type="text" lang="hi" class="flex-1 min-w-[10rem] text-xs bg-white border border-slate-300 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                    <button type="button" id="btn-save-pronunciation" class="text-[11px] font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg px-3 py-1">Save</button>
+                    <button type="button" id="btn-reset-pronunciation" class="hidden text-[11px] font-medium text-slate-500 hover:text-slate-700 underline">Reset</button>
+                </div>
             </div>
         </section>
 
@@ -1138,6 +1146,8 @@
             const text = textInput.value;
             const words = text.trim() ? text.trim().split(/\s+/).length : 0;
             charCount.textContent = `${text.length} characters | ${words} words`;
+            // The open preview describes the old script. Fixes are kept for the next check.
+            document.getElementById("spoken-preview-box").classList.add("hidden");
         }
 
         textInput.addEventListener("input", updateTextCounts);
@@ -1161,28 +1171,124 @@
         const spokenPreviewText = document.getElementById("spoken-preview-text");
         const spokenPreviewChanges = document.getElementById("spoken-preview-changes");
 
+        const pronunciationGuidance = document.getElementById("pronunciation-guidance");
+        const pronunciationEditor = document.getElementById("pronunciation-editor");
+        const pronunciationLabel = document.getElementById("pronunciation-label");
+        const pronunciationInput = document.getElementById("pronunciation-input");
+        const btnSavePronunciation = document.getElementById("btn-save-pronunciation");
+        const btnResetPronunciation = document.getElementById("btn-reset-pronunciation");
+
+        // Guessed spelling -> how the user wants it said. Kept until the page reloads, so a fix
+        // survives edits to the script and applies wherever the word appears.
+        const pronunciationFixes = new Map();
+        let lastPreview = null;
+        let editingChange = null;
+
+        async function normalizeScript(text) {
+            const resp = await fetch("/api/normalize", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: text, mode: "auto" })
+            });
+            if (!resp.ok) throw new Error((await resp.text()) || "Normalization failed");
+            return resp.json();
+        }
+
+        function applyPronunciationFixes(spoken) {
+            if (!pronunciationFixes.size) return spoken;
+            const guesses = [...pronunciationFixes.keys()]
+                .sort((a, b) => b.length - a.length)
+                .map(guess => guess.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+            // \b does not work on Devanagari, and marks count as part of the word.
+            const wholeWord = new RegExp(`(?<![\\p{L}\\p{M}\\p{N}])(?:${guesses.join("|")})(?![\\p{L}\\p{M}\\p{N}])`, "gu");
+            return spoken.replace(wholeWord, guess => pronunciationFixes.get(guess));
+        }
+
+        function renderChange(change) {
+            if (change.type !== "g2p") {
+                const chip = document.createElement("span");
+                chip.className = "text-[10px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-medium";
+                chip.textContent = `${change.from} ➔ ${change.to}`;
+                return chip;
+            }
+            const fix = pronunciationFixes.get(change.to);
+            const chip = document.createElement("button");
+            chip.type = "button";
+            chip.className = `text-[10px] px-2 py-0.5 rounded-full font-medium ${fix
+                ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-200"
+                : "bg-amber-100 text-amber-800 hover:bg-amber-200"}`;
+            chip.textContent = `${change.from} ➔ ${fix || change.to}`;
+            chip.setAttribute("aria-label", `Fix how ${change.from} sounds`);
+            chip.addEventListener("click", () => openPronunciationEditor(change));
+            return chip;
+        }
+
+        function renderSpokenPreview() {
+            const unique = new Map(lastPreview.changes.map(c => [`${c.from}|${c.to}`, c]));
+            const changes = [...unique.values()];
+            spokenPreviewText.textContent = applyPronunciationFixes(lastPreview.normalized);
+            pronunciationGuidance.classList.toggle("hidden", !changes.some(c => c.type === "g2p"));
+            if (changes.length) {
+                spokenPreviewChanges.replaceChildren(...changes.map(renderChange));
+            } else {
+                spokenPreviewChanges.innerHTML = `<span class="text-[10px] text-slate-400">All words phonetically clean.</span>`;
+            }
+        }
+
+        function openPronunciationEditor(change) {
+            editingChange = change;
+            const fix = pronunciationFixes.get(change.to);
+            pronunciationLabel.textContent = `How should "${change.from}" sound?`;
+            pronunciationInput.value = fix || change.to;
+            btnResetPronunciation.classList.toggle("hidden", !fix);
+            pronunciationEditor.classList.remove("hidden");
+            pronunciationInput.focus();
+            pronunciationInput.select();
+        }
+
+        function closePronunciationEditor() {
+            editingChange = null;
+            pronunciationEditor.classList.add("hidden");
+        }
+
+        function savePronunciationFix() {
+            const typed = pronunciationInput.value.trim();
+            if (typed && typed !== editingChange.to) {
+                pronunciationFixes.set(editingChange.to, typed);
+            } else {
+                pronunciationFixes.delete(editingChange.to);
+            }
+            closePronunciationEditor();
+            renderSpokenPreview();
+        }
+
+        btnSavePronunciation.addEventListener("click", savePronunciationFix);
+        btnResetPronunciation.addEventListener("click", () => {
+            pronunciationFixes.delete(editingChange.to);
+            closePronunciationEditor();
+            renderSpokenPreview();
+        });
+        pronunciationInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                savePronunciationFix();
+            } else if (e.key === "Escape") {
+                closePronunciationEditor();
+            }
+        });
+
         btnToggleSpokenPreview.addEventListener("click", async () => {
             const text = textInput.value.trim();
             if (!text) { alert("Please enter text first."); return; }
             spokenPreviewBox.classList.remove("hidden");
             spokenPreviewText.textContent = "Analyzing phonetics & loanwords...";
-            spokenPreviewChanges.innerHTML = "";
+            spokenPreviewChanges.replaceChildren();
+            pronunciationGuidance.classList.add("hidden");
+            closePronunciationEditor();
 
             try {
-                const resp = await fetch("/api/normalize", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ text: text, mode: "auto" })
-                });
-                const data = await resp.json();
-                spokenPreviewText.textContent = data.normalized;
-                if (data.changes && data.changes.length) {
-                    spokenPreviewChanges.innerHTML = data.changes.map(c => 
-                        `<span class="text-[10px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-medium">${c.from} ➔ ${c.to}</span>`
-                    ).join("");
-                } else {
-                    spokenPreviewChanges.innerHTML = `<span class="text-[10px] text-slate-400">All words phonetically clean.</span>`;
-                }
+                lastPreview = await normalizeScript(text);
+                renderSpokenPreview();
             } catch (err) {
                 spokenPreviewText.textContent = "Preview error: " + err.message;
             }
@@ -1220,8 +1326,6 @@
             generateStatusText.textContent = "Connecting to speech synthesizer...";
 
             const formData = new FormData();
-            formData.append("text", text);
-            formData.append("normalize_mode", "auto");
 
             if (state.activeVoiceType === "recorded" && state.recordedWavBlob) {
                 formData.append("voice_wav", state.recordedWavBlob, "recorded_voice.wav");
@@ -1238,6 +1342,17 @@
             }, 100);
 
             try {
+                if (pronunciationFixes.size) {
+                    // Normalize here so the server does not undo the fixes. Always the current
+                    // script, never the text of an older preview.
+                    const { normalized } = await normalizeScript(text);
+                    formData.append("text", applyPronunciationFixes(normalized));
+                    formData.append("normalize_mode", "off");
+                } else {
+                    formData.append("text", text);
+                    formData.append("normalize_mode", "auto");
+                }
+
                 const response = await fetch("/tts", {
                     method: "POST",
                     body: formData
