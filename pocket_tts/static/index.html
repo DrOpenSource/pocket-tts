@@ -1197,6 +1197,7 @@
         const generateBtnLabel = document.getElementById("generate-btn-label");
         const generateProgressContainer = document.getElementById("generate-progress-container");
         const generateStatusText = document.getElementById("generate-status-text");
+        const generateTimeText = document.getElementById("generate-time-text");
         const playerContainer = document.getElementById("player-container");
         const outputAudioPlayer = document.getElementById("output-audio-player");
         const btnDownloadWav = document.getElementById("btn-download-wav");
@@ -1212,6 +1213,9 @@
             }
 
             btnGenerateSpeech.disabled = true;
+            // Hide the previous result so it cannot read as the outcome of this run.
+            outputAudioPlayer.pause();
+            playerContainer.classList.add("hidden");
             generateProgressContainer.classList.remove("hidden");
             generateStatusText.textContent = "Connecting to speech synthesizer...";
 
@@ -1228,6 +1232,10 @@
             }
 
             const startTime = Date.now();
+            generateTimeText.textContent = "0.0s";
+            const timer = setInterval(() => {
+                generateTimeText.textContent = `${((Date.now() - startTime) / 1000).toFixed(1)}s`;
+            }, 100);
 
             try {
                 const response = await fetch("/tts", {
@@ -1267,6 +1275,7 @@
                 console.error("TTS generation error:", err);
                 alert("Speech generation error: " + err.message);
             } finally {
+                clearInterval(timer);
                 btnGenerateSpeech.disabled = false;
                 generateProgressContainer.classList.add("hidden");
             }
