@@ -1,6 +1,11 @@
 import pytest
 
-from pocket_tts.indic_normalizer import normalize_numbers, normalize_text
+from pocket_tts.indic_normalizer import (
+    _COMMON_ENGLISH_WORDS,
+    _ROMAN_HINDI_WORDS,
+    normalize_numbers,
+    normalize_text,
+)
 
 
 def test_normalize_numbers_hindi():
@@ -86,6 +91,37 @@ def test_baje_is_only_consumed_as_a_whole_word():
     # A bare hour has no time reading, so its baje stays a word of its own.
     norm, _ = normalize_text("meeting 5 baje hai", mode="auto")
     assert norm == "मीटिंग पाँच बजे है"
+
+
+@pytest.mark.parametrize(
+    "word, spoken",
+    [
+        ("and", "एंड"),
+        ("you", "यू"),
+        ("people", "पीपल"),
+        ("come", "कम"),
+        ("business", "बिज़नेस"),
+        ("how", "हाउ"),
+    ],
+)
+def test_common_english_words_keep_their_pronunciation(word: str, spoken: str):
+    assert normalize_text(f"यह {word} है", mode="hindi")[0] == f"यह {spoken} है"
+
+
+def test_and_in_mixed_text():
+    norm, changes = normalize_text("₹1,25,000 मिले and 3.14 प्रतिशत", mode="auto")
+    assert norm == "एक लाख पच्चीस हज़ार रुपये मिले एंड तीन दशमलव एक चार प्रतिशत"
+    assert {"from": "and", "to": "एंड", "type": "loanword"} in changes
+
+
+def test_common_english_words_do_not_shadow_romanized_hindi():
+    assert not _COMMON_ENGLISH_WORDS.keys() & _ROMAN_HINDI_WORDS.keys()
+    for word in ("to", "the", "are", "us", "is", "has", "had", "main", "log", "sun"):
+        assert word not in _COMMON_ENGLISH_WORDS
+
+
+def test_romanized_hindi_still_wins_for_shared_words():
+    assert normalize_text("mujhe kuch bhi do", mode="auto")[0] == "मुझे कुछ भी दो"
 
 
 def test_number_fixes_keep_abbreviations_transliteration_and_changes():
